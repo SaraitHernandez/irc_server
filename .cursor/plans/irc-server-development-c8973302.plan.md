@@ -521,3 +521,6 @@ Once each part works independently:
 - [ ] Implementar loop poll/kqueue y gestion clientes
 - [ ] Implementar parser y comandos IRC
 - [ ] Crear scripts/pruebas macOS/Linux
+
+A group of people exchange lanterns and apples along winding light lines, set against a landscape, symbolizing open and diverse communication channels in IRC.
+<img src="illustration/irc.png" alt="IRC" width="400"/>
