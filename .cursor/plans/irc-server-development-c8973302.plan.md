@@ -43,38 +43,55 @@ Before writing code, each team member must study specific concepts. It's recomme
 **Concepts to study:**
 
 1. **TCP/IP Sockets**
+	- What is a socket and how it works 
+		- [general](https://www.perplexity.ai/search/explain-tcp-ip-sockets-for-irc-nCFUl8nvQZSzjCdeh4UnaA#0)
+		- [what is socket](https://www.perplexity.ai/search/what-is-a-socket-and-how-it-wo-5nxnjQnXShOqHX_2.YX5Sg#0)
+		- [size of socket](https://www.perplexity.ai/search/what-is-the-size-of-socket-and-QD73.nBGSsyndqx4MnPfeA#0)
+		- [how TCP checks sockets](https://www.perplexity.ai/search/how-does-tcp-checks-sockets-X5eYbzGCSHCb3mN2B_d1cw#0)
+			- [epoll() vs poll()](https://www.perplexity.ai/search/1-could-be-chosen-epoll-in-fra-l6n5l6g3R0SaZV_mkmH19Q#0)
+			- [select() and kqueue()](https://www.perplexity.ai/search/what-are-other-options-except-1fqGN9nVR8WgniZq.8swzg#0)
 
-   - What is a socket and how it works
-   - Difference between TCP and UDP
-   - The client-server model
-   - Address families (AF_INET, AF_INET6)
+	- Difference between TCP and UDP
+		- [TCP UDP STR](https://www.perplexity.ai/search/difference-between-tcp-and-udp-VziXgM0zTqSQNgi9byV5sA#1)
+	- The client-server model
+		- [general](https://www.perplexity.ai/search/the-client-server-model-_KjwEvsTQhC3qQ5aUKtLlg#0)
+	- Address families (AF_INET, AF_INET6)
+		- [AF_INET, AF_INET6](https://www.perplexity.ai/search/address-families-af-inet-af-in-DQIkfyoFRoyz_Ec5GVe17w#0)
 
 2. **Socket System Calls**
 
-   - `socket()` - create a socket
-   - `bind()` - associate with an address/port
-   - `listen()` - mark as server
-   - `accept()` - accept connections
-   - `send()/recv()` - send/receive data
-   - `close()` - close connections
+   - `socket()`			- [create a socket](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#0)
+   - `bind()`			- [associate with an address/port](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#1)
+   - `listen()`			- [mark as server](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#1)
+   - `accept()`			- [accept connections](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#3)
+   - `send()/recv()`	- [send/receive data](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#1)
+   - `close()`			- [close connections](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#6)
 
 3. **I/O Multiplexing with poll()**
 
    - Why we need multiplexing (can't use threads/fork)
+		- [What is multiplexing](https://www.perplexity.ai/search/what-is-multiplexing-6I2f6MQ9S.CERMP7KfKbhQ#0)
    - How `poll()` and `struct pollfd` work
+		- [how poll and pollfd work](https://www.perplexity.ai/search/how-poll-and-struct-pollfd-wor-C1m1X4mFQSCoYDp0CNad4w#0)
    - Events: POLLIN, POLLOUT, POLLERR, POLLHUP
+		- [POLLIN, POLLOUT, POLLERR, POLLHUP](https://www.perplexity.ai/search/events-pollin-pollout-pollerr-hew4tOr9Tma_YIVllGgxdg#0)
    - The main loop of a server
+		- [main loop server](https://www.perplexity.ai/search/the-main-loop-of-a-server-mdNe5ckuTmeW1huyeQ8Yvw#0)
 
 4. **Non-blocking I/O**
 
    - `fcntl(fd, F_SETFL, O_NONBLOCK)`
+		- `fcntl()`				- [setting non-blocking mode with fcntl()](https://www.perplexity.ai/search/socket-system-calls-socket-TkfszT1PQAaUTo54ZhzTDQ#1)
    - Handling EAGAIN/EWOULDBLOCK
+		- [EAGAIN/EWOULDBLOCK](https://www.perplexity.ai/search/handling-eagain-ewouldblock-Cy51JFHITsq_qoXPn0KYWg#0)
    - Why it's necessary for poll()
+		- [why](https://www.perplexity.ai/search/handling-eagain-ewouldblock-Cy51JFHITsq_qoXPn0KYWg#1)
 
 5. **Byte Order**
 
    - Big endian vs little endian
    - `htons()`, `htonl()`, `ntohs()`, `ntohl()`
+   	- [Big endian vs little endian](https://www.perplexity.ai/search/byte-order-big-endian-vs-littl-G63GjtjVRCqIbHCS6eA60w#0)
 
 **Recommended resources:**
 
