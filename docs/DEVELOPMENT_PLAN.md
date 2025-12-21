@@ -790,6 +790,8 @@ void Server::disconnectClient(int clientFd) {
 **Description:**
 Implement MessageBuffer class that handles CRLF framing. Must reconstruct commands sent in parts and return complete lines.
 
+> See also: Buffer architecture options — [Option 1](BUFFER_ARCHITECTURE_TO_CHOOSE/1.md), [Option 2](BUFFER_ARCHITECTURE_TO_CHOOSE/2.md), [Option 3](BUFFER_ARCHITECTURE_TO_CHOOSE/3.md)
+
 **Tasks:**
 1. Implement `MessageBuffer::MessageBuffer()` in `src/MessageBuffer.cpp`
    - Initialize `buffer_` as empty string

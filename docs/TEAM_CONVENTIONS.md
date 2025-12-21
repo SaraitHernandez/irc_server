@@ -357,3 +357,17 @@ public:
   - Documented key agreements and decisions
   - Added action items tracking
 
+---
+
+## Change Workflow
+
+**Principle:** Treat each module as a black box with explicitly defined and agreed IN/OUT interfaces. When changing a module, make sure unrelated parts are not affected.
+
+**Process:**
+- **Notion:** Find the relevant chapter/page, add a concise comment describing the proposed change, and tag `@Artur`, `@Sarait`, `@Alex` for visibility and feedback.
+- **GitHub:** Push your branch and open a Pull Request with a clear description (what, why, scope of impact). Link the Notion discussion in the PR description.
+
+**Scope control:** Prefer minimal, isolated changes. If an interface must change, align with participants first and update the contract in this document as part of the PR.
+
+- **v1.2** - Added Change Workflow section (Notion + GitHub process, black-box principle)
+
