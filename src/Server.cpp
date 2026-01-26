@@ -182,8 +182,8 @@ void Server::handleNewConnection() {
 	// TODO: Accept new connection, create Client, add to Poller
 }
 
+// TODO: Read data, parse messages, execute commands
 void Server::handleClientInput(int clientFd) {
-	// TODO: Read data, parse messages, execute commands
 	(void)clientFd;
 }
 
