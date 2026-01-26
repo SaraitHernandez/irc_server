@@ -20,7 +20,7 @@
 
 Client::Client(int fd) 
 	: fd_(fd),
-		hostname_("unknown"),
+		hostname_("unknown") {
 		// nickname_(""),
 		// username_(""),
 		// realname_(""),
@@ -30,10 +30,11 @@ Client::Client(int fd)
 		// registered_(false),
 		// registrationStep_(0),
 		// passwordAttempts_(0) {}
+	}
 
 // DONE: dtor
 // - Cleanup if needed (buffer cleanup handled by MessageBuffer destructor)
-Client::~Client() {}
+// Client::~Client() {}
 
 // DONE: getFd() const, getHostname() const
 int	Client::getFd() const {

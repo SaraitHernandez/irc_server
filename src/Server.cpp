@@ -3,10 +3,7 @@
 
 #include "irc/Server.hpp"
 #include "irc/Poller.hpp"
-#include "irc/Parser.hpp"
-#include "irc/CommandRegistry.hpp"
 #include "irc/Client.hpp"
-#include "irc/Channel.hpp"
 #include "irc/MessageBuffer.hpp"
 #include "irc/Config.hpp"
 #include <iostream>
@@ -15,30 +12,69 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <cerrno>	// errno, strerror() — for errors recv/accept
 
-// TODO: Implement Server::Server(const Config& config)
+// DONE: Implement Server::Server(const Config& config)
 // - Store config
-// - Initialize clients_ and channels_ maps
-// - Create Poller instance
+// - Initialize clients_ map
+Server::Server(const Config& config)
+	: serverSocketFd_(-1), config_(config), poller_(NULL) {
+	std::cout << "[Server] Created with port=" << config.getPort() << std::endl;
+}
 
-// TODO: Implement Server::~Server()
+// DONE: Implement Server::~Server()
 // - Close server socket
 // - Delete all clients
-// - Delete all channels
+Server::~Server() {
+	for (std::map<int, Client*>::iterator it = clients_.begin();
+			it != clients_.end(); ++it) {
+		close(it->first);
+		delete it->second;
+	}
+	if (serverSocketFd_ >= 0) {
+		close(serverSocketFd_); // Server Socket here:)
+	}
+	delete poller_;
+	std::cout << "[Server] Destroyed" << std::endl; // Debug message to see lifecycle
+}
 
-// TODO: Implement Server::start()
+// - Delete all channels (logic Layer)
+
+// DONE: Implement Server::start()
 // - Call createServerSocket()
 // - Call bindSocket()
 // - Call listenSocket()
 // - Add server socket to Poller
 // - Set server socket to non-blocking
+void	Server::start() {
+	createServerSocket();
+	bindSocket();
+	listenSocket();
+	setNonBlocking(serverSocketFd_);
 
-// TODO: Implement Server::run()
+	poller_ = new Poller(this);
+	poller_->addFd(serverSocketFd_, POLLIN);
+
+	std::cout << "[Server] Listening on port " << config_.getPort() << std::endl;
+}
+
+// DONE: Implement Server::run()
 // - Main event loop:
 //   while (running) {
 //       poller.poll();
 //       poller.processEvents();
 //   }
+void	Server::run() {
+	std::cout << "[Server] Running event loop..." << std::endl;
+
+	bool running = true;
+	while (running) {
+		int ready = poller_->poll(1000);  // 1 sec timeout
+		if (ready > 0) {
+			poller_->processEvents();
+		}
+	}
+}
 
 // TODO: Implement Server::handleNewConnection()
 // - Accept new connection using accept()
@@ -89,9 +125,69 @@
 // - createChannel(const std::string& name)
 // - removeChannel(const std::string& name)
 
-// TODO: Implement helper methods
-// - createServerSocket(): socket(), set socket options
-// - bindSocket(): bind() with config port
-// - listenSocket(): listen() with backlog
-// - setNonBlocking(int fd): fcntl() with O_NONBLOCK
+// DONE: createServerSocket(): socket(), set socket options
+void Server::createServerSocket() {
+    serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocketFd_ < 0) throw std::runtime_error("socket failed");
+    
+    int opt = 1;
+    setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+}
 
+// DONE: bindSocket(): bind() with config port
+void Server::bindSocket() {
+	struct sockaddr_in addr = {};
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(config_.getPort());
+	addr.sin_addr.s_addr = INADDR_ANY;  // 0.0.0.0
+
+	if (bind(serverSocketFd_, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+		close(serverSocketFd_);
+		throw std::runtime_error("bind failed");
+	}
+
+	std::cout << "[Server] Bound to port " << config_.getPort() << std::endl;
+}
+
+
+// DONE: listenSocket(): listen() with backlog
+void Server::listenSocket() {
+    if (listen(serverSocketFd_, 10) < 0) {
+        close(serverSocketFd_);
+        throw std::runtime_error("listen failed");
+    }
+
+    std::cout << "[Server] Listening backlog=10" << std::endl;
+}
+
+// DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK
+void	Server::setNonBlocking(int fd) {
+	int flags = fcntl(fd, F_GETFL, 0);
+	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+// DONE: getServerFd() for Poller::processEvents()
+int	Server::getServerFd() const {
+	return serverSocketFd_;
+}
+
+// DONE: getClient(int fd)
+Client*	Server::getClient(int fd) {
+	std::map<int, Client*>::iterator it = clients_.find(fd);
+	return (it != clients_.end()) ? it->second : NULL;
+}
+
+// Stub implementations for Network phase
+void Server::handleNewConnection() {
+	// TODO: Accept new connection, create Client, add to Poller
+}
+
+void Server::handleClientInput(int clientFd) {
+	// TODO: Read data, parse messages, execute commands
+	(void)clientFd;
+}
+
+void Server::disconnectClient(int clientFd) {
+	// TODO: Remove client from all channels, close socket, delete Client
+	(void)clientFd;
+}

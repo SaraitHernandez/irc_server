@@ -18,7 +18,7 @@ public:
 	Client(int fd);
 
 	// Destructor
-	~Client();
+	// ~Client();
 
 	// ========== NETWORK LAYER (Alex) ==========
 	int getFd() const;

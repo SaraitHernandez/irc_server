@@ -365,7 +365,7 @@ if (!c) {
 
 Client* target = server.getClientByNickname("alice");
 if (!target) {
-    // Send ERR_NOSUCHNICK
+    // SEND ERR_NOSUCHNICK
     return;
 }
 

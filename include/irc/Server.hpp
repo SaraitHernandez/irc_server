@@ -3,69 +3,70 @@
 
 #include <string>
 #include <map>
-// #include "Client.hpp"
-// #include "Channel.hpp"
-// #include "Config.hpp"
+#include "Client.hpp"	// Client*
+#include "Poller.hpp"	// poller_
+#include "Config.hpp"	// config_.getPort()
 
+//  - Network Layer (Alex) -
 // Main server class - manages socket, connections, and I/O
 // Coordinates between Poller, Parser, and Command handlers
 class Server {
 public:
     // Constructor: initialize server with configuration
-    // Server(const Config& config);
+    Server(const Config& config);
     
     // Destructor: cleanup resources
-    // ~Server();
+    ~Server();
     
     // Start the server: create socket, bind, listen
-    // void start();
+    void start();
     
     // Main server loop (calls Poller::poll())
-    // void run();
+    void run();
     
     // Handle new client connection (called by Poller)
-    // void handleNewConnection();
+    void handleNewConnection();
     
     // Handle incoming data from client (called by Poller)
-    // void handleClientInput(int clientFd);
+    void handleClientInput(int clientFd);
     
     // Handle client disconnection
-    // void disconnectClient(int clientFd);
+    void disconnectClient(int clientFd);
     
     // Send data to a specific client (PRIMARY METHOD - see TEAM_CONVENTIONS.md)
-    // void sendToClient(int clientFd, const std::string& message);
+    void sendToClient(int clientFd, const std::string& message);
     
     // Convenience method for sending formatted IRC response
-    // void sendResponse(int clientFd, const std::string& numeric,
-    //                   const std::string& params, const std::string& trailing);
+    void sendResponse(int clientFd, const std::string& numeric,
+                      const std::string& params, const std::string& trailing);
     
     // Broadcast message to all clients in a channel
     // void broadcastToChannel(const std::string& channelName, const std::string& message, int excludeFd = -1);
     
     // Client management
-    // Client* getClient(int fd);
+    Client* getClient(int fd);
     // Client* getClientByNickname(const std::string& nickname);
     // void addClient(int fd);
     // void removeClient(int fd);
     
-    // Channel management
-    // Channel* getChannel(const std::string& name);
-    // Channel* createChannel(const std::string& name);
-    // void removeChannel(const std::string& name);
-    
 private:
-    // int serverSocketFd_;
-    // Config config_;
+    int serverSocketFd_;
+    Config config_;
+    Poller* poller_;
     
     // Client and channel storage
-    // std::map<int, Client*> clients_;           // fd -> Client*
+    std::map<int, Client*> clients_;           // fd -> Client*
     // std::map<std::string, Channel*> channels_; // channel name -> Channel*
     
     // Helper methods
-    // void createServerSocket();
-    // void bindSocket();
-    // void listenSocket();
-    // void setNonBlocking(int fd);
+    void createServerSocket();
+    void bindSocket();
+    void listenSocket();
+    void setNonBlocking(int fd);
+    
+public:
+    int getServerFd() const;
+    Poller* getPoller() const { return poller_; }
 };
 
 #endif // SERVER_HPP
