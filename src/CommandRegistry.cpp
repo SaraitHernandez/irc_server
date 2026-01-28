@@ -1,5 +1,14 @@
-// CommandRegistry implementation
-// Registers and routes IRC commands to their handler functions
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CommandRegistry.cpp                                :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/26 23:31:17 by akacprzy          #+#    #+#             */
+/*   Updated: 2026/01/27 01:00:30 by akacprzy         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "irc/CommandRegistry.hpp"
 #include "irc/Server.hpp"
@@ -21,42 +30,74 @@
 #include "irc/commands/Pong.hpp"
 #include <cctype>
 
-// TODO: Implement CommandRegistry::CommandRegistry()
-// - Call initializeHandlers() to register all commands
+// Constructor
+CommandRegistry::CommandRegistry() {
+    initializeHandlers();
+}
 
-// TODO: Implement CommandRegistry::~CommandRegistry()
-// - Cleanup if needed
+// Deconstructor
+CommandRegistry::~CommandRegistry() {}
 
-// TODO: Implement CommandRegistry::execute(Server& server, Client& client, const Command& cmd)
+// Method - execute()
 // - Convert command.command to uppercase
 // - Look up handler in handlers_ map
 // - If found, call handler(server, client, cmd)
 // - If not found, send ERR_UNKNOWNCOMMAND
 // - Return true if executed, false if not found
+bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd)
+{
+    if (cmd.command.empty())
+        return false;
 
-// TODO: Implement CommandRegistry::registerCommand(const std::string& command, CommandHandler handler)
+    std::string upperCmd = cmd.command;
+    for (size_t i = 0; i < upperCmd.length(); ++i)
+        upperCmd[i] = std::toupper(upperCmd[i]);
+
+    std::map<std::string, CommandHandler>::iterator ii = handlers_.find(upperCmd);
+    if (ii != handlers_.end())
+	{
+        ii->second(server, client, cmd);
+        return true;
+    }
+
+    // Command not found: Send ERR_UNKNOWNCOMMAND (421)
+    std::string nick = client.getNickname();
+    if (nick.empty())
+        nick = "*";
+    std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
+    server.sendToClient(client.getFd(), msg);
+    
+    return false;
+}
+
+// Method - registerCommand()
 // - Convert command to uppercase
 // - Store in handlers_ map
+void CommandRegistry::registerCommand(const std::string& command, CommandHandler handler)
+{
+    std::string upperCmd = command;
+    for (size_t i = 0; i < upperCmd.length(); ++i)
+        upperCmd[i] = std::toupper(upperCmd[i]);
+    handlers_[upperCmd] = handler;
+}
 
-// TODO: Implement CommandRegistry::hasCommand(const std::string& command) const
+// Method - hasCommand()
 // - Convert to uppercase
 // - Check if exists in handlers_ map
+bool CommandRegistry::hasCommand(const std::string& command) const
+{
+    std::string upperCmd = command;
+    for (size_t i = 0; i < upperCmd.length(); ++i)
+        upperCmd[i] = std::toupper(upperCmd[i]);
+    return handlers_.find(upperCmd) != handlers_.end();
+}
 
-// TODO: Implement CommandRegistry::initializeHandlers()
-// Register all command handlers:
-// - registerCommand("PASS", handlePass);
-// - registerCommand("NICK", handleNick);
-// - registerCommand("USER", handleUser);
-// - registerCommand("JOIN", handleJoin);
-// - registerCommand("PART", handlePart);
-// - registerCommand("PRIVMSG", handlePrivmsg);
-// - registerCommand("NOTICE", handleNotice);  // Similar to PRIVMSG
-// - registerCommand("INVITE", handleInvite);
-// - registerCommand("KICK", handleKick);
-// - registerCommand("TOPIC", handleTopic);
-// - registerCommand("MODE", handleMode);
-// - registerCommand("QUIT", handleQuit);
-// - registerCommand("PING", handlePing);
-// - registerCommand("PONG", handlePong);
-// - Optional: WHO, WHOIS (low priority)
-
+// Method - initializeHandlers()
+// - Register all command handlers
+void CommandRegistry::initializeHandlers()
+{
+    // Register commands here when implemented
+    registerCommand("PASS", handlePass);
+    // registerCommand("NICK", handleNick);
+    // ...
+}
