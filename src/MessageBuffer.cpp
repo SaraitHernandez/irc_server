@@ -1,46 +1,74 @@
-// MessageBuffer implementation
-// Manages incomplete messages, extracts complete messages ending with CRLF
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   MessageBuffer.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/18 22:00:02 by akacprzy          #+#    #+#             */
+/*   Updated: 2026/01/18 22:14:49 by akacprzy         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "irc/MessageBuffer.hpp"
 
-// TODO: Implement MessageBuffer::MessageBuffer()
-// - Initialize buffer_ as empty string
+// Constructor - Initialize buffer_ as empty string
+MessageBuffer::MessageBuffer() : buffer_("") {}
 
-// TODO: Implement MessageBuffer::~MessageBuffer()
-// - No cleanup needed (string handles it)
+// Deconstructor - No cleanup needed (string handles it)
+MessageBuffer::~MessageBuffer() {}
 
-// TODO: Implement MessageBuffer::append(const std::string& data)
-// - Append data to buffer_
-// - Handle binary data safely
+// Method - append() data to buffer_
+void MessageBuffer::append(const std::string& data)
+{
+    buffer_ += data;
+}
 
-// TODO: Implement MessageBuffer::extractMessages()
+// Method - extractMessages()
 // - Find all complete messages (ending with \r\n)
 // - Extract each complete message
 // - Remove extracted messages from buffer_
 // - Return vector of complete message strings
 // - Keep incomplete data in buffer_ for next append
-//
-// Algorithm:
-//   while (buffer_ contains "\r\n") {
-//       find position of "\r\n"
-//       extract substring from start to position+2
-//       add to result vector
-//       remove from buffer_
-//   }
+std::vector<std::string> MessageBuffer::extractMessages()
+{
+    std::vector<std::string> messages;
+    size_t pos;
 
-// TODO: Implement MessageBuffer::getBuffer() const
-// - Return const reference to buffer_
+    while ((pos = findMessageEnd()) != std::string::npos)
+	{
+        messages.push_back(buffer_.substr(0, pos + 2));
+        buffer_.erase(0, pos + 2);
+    }
+    return messages;
+}
 
-// TODO: Implement MessageBuffer::clear()
-// - Clear buffer_ string
+// Method - getBuffer() - return const reference to buffer_
+const std::string& MessageBuffer::getBuffer() const
+{
+    return buffer_;
+}
 
-// TODO: Implement MessageBuffer::isEmpty() const
-// - Return buffer_.empty()
+// Method - clear() - clear buffer_ string
+void MessageBuffer::clear() 
+{
+    buffer_.clear();
+}
 
-// TODO: Implement MessageBuffer::size() const
-// - Return buffer_.size()
+// Method - isEmpty() - return buffer_.empty()
+bool MessageBuffer::isEmpty() const
+{
+    return buffer_.empty();
+}
 
-// TODO: Implement MessageBuffer::findMessageEnd(size_t startPos) const
-// - Helper method to find next "\r\n" starting from startPos
-// - Return position or std::string::npos if not found
+// Method - size() - return buffer_.size()
+size_t MessageBuffer::size() const 
+{
+    return buffer_.size();
+}
 
+// Method - findMessageEnd(size_t startPos) - helper method to find next "\r\n" starting from startPos
+size_t MessageBuffer::findMessageEnd(size_t startPos) const
+{
+    return buffer_.find("\r\n", startPos);
+}
