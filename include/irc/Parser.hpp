@@ -1,9 +1,21 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Parser.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/19 23:20:04 by akacprzy          #+#    #+#             */
+/*   Updated: 2026/01/19 23:22:04 by akacprzy         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-#include <string>
-#include <vector>
-// #include "Command.hpp"
+#ifndef PARSER_HPP
+
+# define PARSER_HPP
+
+# include <string>
+# include <vector>
 
 // Forward declaration
 struct Command;
@@ -13,31 +25,14 @@ struct Command;
 class Parser {
 public:
     // Constructor
-    // Parser();
+    Parser();
     
     // Destructor
-    // ~Parser();
+    ~Parser();
     
     // Parse a complete IRC message string into Command structure
     // Returns true if parsing successful, false otherwise
-    // bool parse(const std::string& message, Command& cmd);
-    
-    // Validate message format (basic validation)
-    // static bool isValidFormat(const std::string& message);
-    
-    // Helper: split message into tokens
-    // static std::vector<std::string> tokenize(const std::string& message);
-    
-private:
-    // Helper methods for parsing different parts
-    // bool parsePrefix(const std::string& token, Command& cmd);
-    // bool parseCommand(const std::string& token, Command& cmd);
-    // bool parseParams(const std::vector<std::string>& tokens, Command& cmd, size_t startIdx);
-    // void parseTrailing(const std::string& trailing, Command& cmd);
-    
-    // bool isValidCommand(const std::string& command) const;
-    // bool isValidPrefix(const std::string& prefix) const;
+    bool parse(const std::string& message, Command& cmd);
 };
 
-#endif // PARSER_HPP
-
+#endif
