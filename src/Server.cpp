@@ -178,16 +178,79 @@ Client*	Server::getClient(int fd) {
 }
 
 // Stub implementations for Network phase
-void Server::handleNewConnection() {
-	// TODO: Accept new connection, create Client, add to Poller
+// DOING: Accept new connection, create Client, add to Poller
+void	Server::handleNewConnection() {
+	struct sockaddr_in clientAddr;
+	socklen_t clientLen = sizeof(clientAddr);
+
+	// accept new connection
+	int clientFd = accept(serverSocketFd_, 
+							(struct sockaddr*)&clientAddr, 
+							&clientLen);
+
+	if (clientFd < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			return; // there are no connections
+		}
+		std::cerr << "[Server] accept() failed: " 
+					<< strerror(errno) << std::endl;
+		return;
+	}
+
+	// set non blocking mode
+	setNonBlocking(clientFd);
+
+	// add to Poller
+	poller_->addFd(clientFd, POLLIN);
+
+	std::cout << "[Server] New connection fd=" << clientFd << std::endl;
 }
 
-// TODO: Read data, parse messages, execute commands
-void Server::handleClientInput(int clientFd) {
-	(void)clientFd;
+
+// DOING: Read data, parse messages, execute commands
+void	Server::handleClientInput(int fd) {
+	std::cout << "\n=== DEBUG MSG: handleClientInput START fd=" << fd << " ===" << std::endl;
+
+	char	buffer[512];
+	ssize_t bytesRead = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
+	std::cout << "[Server] recv() returned: " << bytesRead << std::endl;
+	std::cout << "[Server] errno: " << errno 
+				<< " (" << strerror(errno) << ")" << std::endl;
+
+	if (bytesRead < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			std::cout << "[Server] EAGAIN/EWOULDBLOCK - no data yet" << std::endl;
+			return; // no data yet
+		}
+		std::cerr << "[Server] recv() error fd=" << fd << std::endl;
+		disconnectClient(fd);
+		return;
+	}
+
+	if (bytesRead == 0) {
+		// client closed connection
+		std::cout << "[Server] Client disconnected fd=" << fd << std::endl;
+		disconnectClient(fd);
+		std::cout << "=== handleClientInput DEBUG MSG: (disconnected 'Ctrl+C') ===" << std::endl;
+		return;
+	}
+	//data received
+	std::cout << "[Server] Case: bytesRead > 0 (" << bytesRead << " bytes)" << std::endl;
+	// debug: output of data received
+	buffer[bytesRead] = '\0';
+	std::cout << "[Server] Received from fd=" << fd 
+				<< ": " << buffer << std::endl;
+	std::cout << "=== DEBUG MSG: handleClientInput ===" << std::endl;
 }
 
-void Server::disconnectClient(int clientFd) {
-	// TODO: Remove client from all channels, close socket, delete Client
-	(void)clientFd;
+// DOING: Remove client from all channels, close socket, delete Client
+void	Server::disconnectClient(int fd) {
+	std::cout << "[Server] Disconnecting fd=" << fd << std::endl;
+	// remove from Poller
+	poller_->removeFd(fd);
+	// close socket
+	close(fd);
+	// TODO: remove Client object from clients_
 }
+

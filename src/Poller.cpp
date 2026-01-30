@@ -82,39 +82,44 @@ int Poller::poll(int timeout) {
 //     - Client socket: call server->handleClientInput(fd)
 //   - If POLLOUT: handle write events (if needed)
 //   - If POLLERR/POLLHUP: call server->disconnectClient(fd)
-void	Poller::processEvents() {
-	int	serverFd = server_->getServerFd();
+void Poller::processEvents() {
+    int serverFd = server_->getServerFd();
 
-	for (size_t i = 0; i < pollfds_.size(); ++i) {
-		int fd = pollfds_[i].fd;
-		short revents = pollfds_[i].revents;
-		
-		if (revents == 0) {
-			continue;
-		}
-		
-		std::cout << "[Poller] fd=" << fd << " revents=0x" << std::hex << revents << std::dec << std::endl;
-		
-		// POLLIN: data ready
-		if (revents & POLLIN) {
-			if (fd == serverFd) {
-				// New connection
-				server_->handleNewConnection();
-			} else {
-				// Client data
-				server_->handleClientInput(fd);
-			}
-		}
-		
-		// POLLERR/POLLHUP: error/disconnect
-		if (revents & (POLLERR | POLLHUP)) {
-			if (fd != serverFd) {
-				std::cout << "[Poller] Error/HUP on fd=" << fd << std::endl;
-				server_->disconnectClient(fd);
-			}
-		}
-	}
+    for (size_t i = 0; i < pollfds_.size(); ++i) {
+        int fd = pollfds_[i].fd;
+        short revents = pollfds_[i].revents;
+        
+        if (revents == 0) continue;
+        
+        std::cout << "[Poller] fd=" << fd << " revents=0x" 
+                  << std::hex << revents << std::dec;
+        
+        // Логируем события для отладки
+        if (revents & POLLIN)  std::cout << " POLLIN";
+        if (revents & POLLHUP) std::cout << " POLLHUP";
+        if (revents & POLLERR) std::cout << " POLLERR";
+        std::cout << std::endl;
+        
+        if (fd == serverFd) {
+            // Новое соединение на серверном сокете
+            if (revents & POLLIN) {
+                server_->handleNewConnection();
+            }
+        } else {
+            // Клиентский сокет: обрабатываем POLLIN или POLLHUP
+            if (revents & (POLLIN | POLLHUP)) {
+                // handleClientInput сам обработает recv() == 0
+                server_->handleClientInput(fd);
+            }
+            // POLLERR: критическая ошибка сокета
+            else if (revents & POLLERR) {
+                std::cerr << "[Poller] POLLERR on fd=" << fd << std::endl;
+                server_->disconnectClient(fd);
+            }
+        }
+    }
 }
+
 
 // TODO: Implement Poller::hasEvent(int fd, short event) const
 // - Find fd in pollfds_
