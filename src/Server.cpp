@@ -13,6 +13,11 @@
 #include <fcntl.h>
 #include <cstring>
 #include <cerrno>	// errno, strerror() — for errors recv/accept
+#include <csignal> // sig_atomic_t, signal(), SIGINT
+
+
+/*******5 SIGINT handler*/
+volatile	sig_atomic_t Server::running_ = true;
 
 // DONE: Implement Server::Server(const Config& config)
 // - Store config
@@ -58,6 +63,14 @@ void	Server::start() {
 	std::cout << "[Server] Listening on port " << config_.getPort() << std::endl;
 }
 
+/*******5 SIGINT handler*/
+static void	signalHandler(int signal) {
+	if (signal == SIGINT) {
+		std::cout << "\n[Server] Received SIGINT, shutting down..." << std::endl;
+		Server::running_ = false;
+	}
+}
+
 // DONE: Implement Server::run()
 // - Main event loop:
 //   while (running) {
@@ -65,16 +78,21 @@ void	Server::start() {
 //       poller.processEvents();
 //   }
 void	Server::run() {
+	/*******5 SIGINT handler*/
+	signal(SIGINT, signalHandler);
+	signal(SIGTERM, signalHandler);
+
 	std::cout << "[Server] Running event loop..." << std::endl;
 
-	bool running = true;
-	while (running) {
+	while (running_) {
 		int ready = poller_->poll(1000);  // 1 sec timeout
 		if (ready > 0) {
 			poller_->processEvents();
 		}
 	}
+	std::cout << "[Server] Event loop stopped" << std::endl;
 }
+
 
 // TODO: Implement Server::handleNewConnection()
 // - Accept new connection using accept()
@@ -163,7 +181,17 @@ void Server::listenSocket() {
 // DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK
 void	Server::setNonBlocking(int fd) {
 	int flags = fcntl(fd, F_GETFL, 0);
-	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	if (flags < 0)
+	{  // ← error check *******4
+		std::cerr << "[Server] fcntl(F_GETFL) failed for fd=" << fd 
+					<< ": " << strerror(errno) << std::endl;
+		return;
+	}
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+	{  // ← error check *******4
+		std::cerr << "[Server] fcntl(F_SETFL) failed for fd=" << fd 
+					<< ": " << strerror(errno) << std::endl;
+	}
 }
 
 // DONE: getServerFd() for Poller::processEvents()

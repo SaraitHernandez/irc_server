@@ -14,6 +14,7 @@
 // - Store server pointer
 // - Initialize pollfds_ vector
 Poller::Poller(Server* server) : server_(server) {
+	pollfds_.reserve(64); // reserved for 64 fd ********1
 	std::cout << "[Poller] Initialized" << std::endl;
 }
 
@@ -23,18 +24,26 @@ Poller::~Poller() {
 	std::cout << "[Poller] Destroyed" << std::endl;
 }
 
-// DONE: Implement Poller::addFd(int fd, short events)
+// DONE: Implement Poller::	(int fd, short events)
 // - Create pollfd structure
 // - Add to pollfds_ vector
 // - Set fd, events, and revents (initially 0)
 void	Poller::addFd(int fd, short events) {
+	// check: does fd exists already? *******2
+	for (size_t i = 0; i < pollfds_.size(); ++i) {
+		if (pollfds_[i].fd == fd) {
+			std::cerr << "[Poller] WARNING: fd=" << fd 
+						<< " already exists!" << std::endl;
+			return;
+		}
+	}
 	struct pollfd pfd;
 	pfd.fd = fd;
 	pfd.events = events;
 	pfd.revents = 0;
 	pollfds_.push_back(pfd);
 
-    std::cout << "[Poller] Added fd=" << fd << " events=0x" << std::hex << events << std::dec << std::endl;
+	std::cout << "[Poller] Added fd=" << fd << " events=0x" << std::hex << events << std::dec << std::endl;
 }
 
 // DONE: Implement Poller::removeFd(int fd)
@@ -50,6 +59,8 @@ void	Poller::removeFd(int fd) {
 			return;
 		}
 	}
+	// ← if we here, fd was not found *******3
+	std::cerr << "[Poller] WARNING: fd=" << fd << " not found!" << std::endl;
 }
 
 // DONE: Implement Poller::poll(int timeout)
@@ -61,9 +72,10 @@ int Poller::poll(int timeout) {
 	if (pollfds_.empty()) {
 		return 0;
 	}
-
+	
 	int ready = ::poll(&pollfds_[0], pollfds_.size(), timeout);
-
+    //          ↑↑
+    //          prefix :: search in global
 	if (ready < 0) {
 		if (errno == EINTR) {
 			return 0;  // Signal interrupt - normal
@@ -82,42 +94,42 @@ int Poller::poll(int timeout) {
 //     - Client socket: call server->handleClientInput(fd)
 //   - If POLLOUT: handle write events (if needed)
 //   - If POLLERR/POLLHUP: call server->disconnectClient(fd)
-void Poller::processEvents() {
-    int serverFd = server_->getServerFd();
+void	Poller::processEvents() {
+	int serverFd = server_->getServerFd();
 
-    for (size_t i = 0; i < pollfds_.size(); ++i) {
-        int fd = pollfds_[i].fd;
-        short revents = pollfds_[i].revents;
-        
-        if (revents == 0) continue;
-        
-        std::cout << "[Poller] fd=" << fd << " revents=0x" 
-                  << std::hex << revents << std::dec;
-        
-        // Логируем события для отладки
-        if (revents & POLLIN)  std::cout << " POLLIN";
-        if (revents & POLLHUP) std::cout << " POLLHUP";
-        if (revents & POLLERR) std::cout << " POLLERR";
-        std::cout << std::endl;
-        
-        if (fd == serverFd) {
-            // Новое соединение на серверном сокете
-            if (revents & POLLIN) {
-                server_->handleNewConnection();
-            }
-        } else {
-            // Клиентский сокет: обрабатываем POLLIN или POLLHUP
-            if (revents & (POLLIN | POLLHUP)) {
-                // handleClientInput сам обработает recv() == 0
-                server_->handleClientInput(fd);
-            }
-            // POLLERR: критическая ошибка сокета
-            else if (revents & POLLERR) {
-                std::cerr << "[Poller] POLLERR on fd=" << fd << std::endl;
-                server_->disconnectClient(fd);
-            }
-        }
-    }
+	for (size_t i = 0; i < pollfds_.size(); ++i) {
+		int fd = pollfds_[i].fd;
+		short revents = pollfds_[i].revents;
+		
+		if (revents == 0) continue;
+		
+		std::cout << "[Poller] fd=" << fd << " revents=0x" 
+					<< std::hex << revents << std::dec;
+		
+		// DEBUG: loging events
+		if (revents & POLLIN)  std::cout << " POLLIN";
+		if (revents & POLLHUP) std::cout << " POLLHUP";
+		if (revents & POLLERR) std::cout << " POLLERR";
+		std::cout << std::endl;
+		
+		if (fd == serverFd) {
+			// new connection on server socket
+			if (revents & POLLIN) {
+				server_->handleNewConnection();
+			}
+		} else {
+			// client socket: proceeds POLLIN or POLLHUP
+			if (revents & (POLLIN | POLLHUP)) {
+				// handleClientInput proceeds recv() == 0
+				server_->handleClientInput(fd);
+			}
+			// POLLERR: criticall socket error
+			else if (revents & POLLERR) {
+				std::cerr << "[Poller] POLLERR on fd=" << fd << std::endl;
+				server_->disconnectClient(fd);
+			}
+		}
+	}
 }
 
 
