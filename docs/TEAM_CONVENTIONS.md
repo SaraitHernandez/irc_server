@@ -87,6 +87,7 @@ struct Command {
     bool hasPrefix() const;
     std::string getParam(size_t index) const;  // Returns empty string if index out of bounds
     size_t paramCount() const;
+    std::string getFullCommand() const;
 };
 ```
 

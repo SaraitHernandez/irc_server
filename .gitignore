@@ -41,3 +41,11 @@
 *.dwo
 
 .DS_Store
+# VSCode files
+.vscode/*
+
+# Sandbox files
+-sandbox-*
+
+# Tests
+tests/*/run_test_*
