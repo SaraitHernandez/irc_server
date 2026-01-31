@@ -1,63 +1,114 @@
-// Parser implementation
-// Parses IRC message format: [:<prefix>] <command> [params] [:<trailing>]\r\n
-// Converts string messages into Command structure
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Parser.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/19 23:21:22 by akacprzy          #+#    #+#             */
+/*   Updated: 2026/01/26 23:22:02 by akacprzy         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "irc/Parser.hpp"
 #include "irc/Command.hpp"
-#include "irc/Utils.hpp"
-#include <sstream>
+#include <iostream>
 
-// TODO: Implement Parser::Parser()
-// - Initialize if needed
+// Constructor
+Parser::Parser() {}
 
-// TODO: Implement Parser::parse(const std::string& message, Command& cmd)
-// Main parsing logic:
-// 1. Store raw message in cmd.raw
-// 2. Remove trailing \r\n if present
-// 3. Tokenize message by spaces (but preserve :trailing as single token)
-// 4. First token:
-//    - If starts with ':', it's a prefix - parse prefix, next token is command
-//    - Otherwise, it's the command
-// 5. Remaining tokens until ':' are params
-// 6. Token starting with ':' is trailing (remove the ':')
-// 7. Return true on success, false on error
+// Deconstructor
+Parser::~Parser() {}
 
-// TODO: Implement Parser::isValidFormat(const std::string& message)
-// - Check basic format:
-//   - Must contain at least one space (for command)
-//   - Must end with \r\n
-//   - Command must be valid (alphanumeric or special chars)
-//   - Prefix format if present: "nick!user@host" or "nick" or "server"
+// Method - parse() - main parsing logic:
+bool Parser::parse(const std::string& message, Command& cmd)
+{
+	std::string line = message;
+	size_t pos = 0;
 
-// TODO: Implement Parser::tokenize(const std::string& message)
-// - Split by spaces, but handle ':' specially:
-//   - When ':' is found, everything after is trailing (single token)
-//   - Preserve leading ':' in trailing token
-// - Return vector of tokens
+    // 1. Reset command structure
+    cmd.raw = message;
+    cmd.prefix = "";
+    cmd.command = "";
+    cmd.params.clear();
+    cmd.trailing = "";
 
-// TODO: Implement Parser::parsePrefix(const std::string& token, Command& cmd)
-// - Remove leading ':'
-// - Store in cmd.prefix
-// - Validate format (optional)
+    // 2. Remove trailing \r\n
+    if (line.length() > 1 && line[line.length() - 2] == '\r' && line[line.length() - 1] == '\n')
+        line.erase(line.length() - 2);
+    else if (!line.empty() && line[line.length() - 1] == '\n')
+        line.erase(line.length() - 1);
 
-// TODO: Implement Parser::parseCommand(const std::string& token, Command& cmd)
-// - Convert to uppercase
-// - Store in cmd.command
-// - Validate command name
+    if (line.empty()) return false;
 
-// TODO: Implement Parser::parseParams(...)
-// - Add tokens to cmd.params
-// - Stop when ':' token is found (that's trailing)
+    // Skip leading spaces
+    while (pos < line.length() && line[pos] == ' ')
+        pos++;
+    if (pos >= line.length()) return false;
 
-// TODO: Implement Parser::parseTrailing(const std::string& trailing, Command& cmd)
-// - Remove leading ':'
-// - Store in cmd.trailing
+    // 3. Prefix (starts with :)
+    if (line[pos] == ':')
+	{
+        size_t end = line.find(' ', pos);
+		// Invalid: Prefix but no command
+        if (end == std::string::npos)
+			return false;
+        cmd.prefix = line.substr(pos + 1, end - pos - 1);
+        pos = end + 1;
+        // Skip spaces
+        while (pos < line.length() && line[pos] == ' ')
+			pos++;
+    }
 
-// TODO: Implement Parser::isValidCommand(const std::string& command) const
-// - Check if command is alphanumeric or contains allowed special chars
-// - Return true if valid
+    // 4. Command
+	// Invalid: No command
+    if (pos >= line.length())
+		return false;
+    
+    size_t end = line.find(' ', pos);
+    if (end == std::string::npos) 
+	{
+        cmd.command = line.substr(pos);
+        pos = line.length();
+    }
+	else
+	{
+        cmd.command = line.substr(pos, end - pos);
+        pos = end + 1;
+    }
+    
+    // Normalize command to uppercase
+    for (size_t i = 0; i < cmd.command.length(); ++i)
+	{
+        cmd.command[i] = std::toupper(cmd.command[i]);
+    }
 
-// TODO: Implement Parser::isValidPrefix(const std::string& prefix) const
-// - Validate prefix format: "nick!user@host" or "nick" or server name
-// - Return true if valid
+    // 5. Params & Trailing
+    while (pos < line.length())
+	{
+        // Skip spaces
+        while (pos < line.length() && line[pos] == ' ')
+			pos++;
+        if (pos >= line.length())
+			break;
 
+        // Check for trailing parameter (starts with :)
+        if (line[pos] == ':')
+		{
+            cmd.trailing = line.substr(pos + 1);
+            break; // Trailing consumes the rest of the line
+        }
+        
+        // Regular parameter
+        end = line.find(' ', pos);
+        if (end == std::string::npos)
+		{
+            cmd.params.push_back(line.substr(pos));
+            break;
+        }
+        cmd.params.push_back(line.substr(pos, end - pos));
+        pos = end;
+    }
+
+    return true;
+}
