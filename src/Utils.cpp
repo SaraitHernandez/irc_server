@@ -6,6 +6,20 @@
 #include <algorithm>
 #include <cctype>
 
+std::string Utils::join(const std::vector<std::string>& strings, const std::string& delimiter)
+{
+    if (strings.empty())
+        return "";
+    
+    std::string result = strings[0];
+    for (size_t i = 1; i < strings.size(); ++i)
+    {
+        result += delimiter;
+        result += strings[i];
+    }
+    return result;
+}
+
 // TODO: Implement Utils::trim(const std::string& str)
 // - Remove leading and trailing whitespace
 // - Return trimmed string
