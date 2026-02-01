@@ -227,6 +227,9 @@ void	Server::handleNewConnection() {
 
 	// set non blocking mode
 	setNonBlocking(clientFd);
+	//10*******create Client object and register in map
+	Client* client = new Client(clientFd);// allocate on heap
+	clients_[clientFd] = client;// register fd->client mapping
 
 	// add to Poller
 	poller_->addFd(clientFd, POLLIN);
@@ -275,10 +278,44 @@ void	Server::handleClientInput(int fd) {
 // DOING: Remove client from all channels, close socket, delete Client
 void	Server::disconnectClient(int fd) {
 	std::cout << "[Server] Disconnecting fd=" << fd << std::endl;
-	// remove from Poller
+
+	// 1) find client
+	Client* client = getClient(fd);
+	if (!client) {
+		std::cerr << "[Server] ERROR: client fd=" << fd << " not found!" << std::endl;
+		// clean socket anyway
+		poller_->removeFd(fd);
+		close(fd);
+		return;
+	}
+
+	// 2) TODO (when Dev C(Logic layer)): remove from channels
+	// after Dev C will write Channel::removeClient and Client::getChannels(), ADD:
+	// std::vector<std::string> channels = client->getChannels();
+	// for (size_t i = 0; i < channels.size(); ++i) {
+	//     Channel* chan = getChannel(channels[i]);
+	//     if (chan) {
+	//         chan->removeClient(client);
+	//         if (chan->isEmpty()) {
+	//             delete chan;
+	//             channels_.erase(channels[i]);
+	//         }
+	//     }
+	// }
+
+	// 3) remove from clients_ map
+	clients_.erase(fd);
+
+	// 4) remove from Poller
 	poller_->removeFd(fd);
-	// close socket
+
+	// 5) close socket
 	close(fd);
-	// TODO: remove Client object from clients_
+
+	// 6) clean memory (IMPORTANT!)
+	delete client;
+
+	std::cout << "[Server] Client fd=" << fd << " disconnected and cleaned up" << std::endl;
 }
+
 
