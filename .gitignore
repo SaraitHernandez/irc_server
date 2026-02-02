@@ -39,3 +39,12 @@
 
 # debug information files
 *.dwo
+
+# VSCode files
+.vscode/*
+
+# Sandbox files
+-sandbox-*
+
+# Tests
+tests/*/run_test_*
