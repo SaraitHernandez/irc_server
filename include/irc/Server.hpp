@@ -7,11 +7,28 @@
 #include "Client.hpp"	// Client*
 #include "Poller.hpp"	// poller_
 #include "Config.hpp"	// config_.getPort()
+#include "irc/MessageBuffer.hpp" //100******* MessageBuffer
 
-//  - Network Layer (Alex) -
 // Main server class - manages socket, connections, and I/O
 // Coordinates between Poller, Parser, and Command handlers
-class Server {
+class	Server {
+
+private:
+	int serverSocketFd_;
+	Config config_;
+	Poller* poller_;
+
+	// Client and channel storage
+	std::map<int, Client*> clients_;           // fd -> Client*
+	// std::map<std::string, Channel*> channels_; // channel name -> Channel*
+	//101******* MessageBuffer
+	std::map<int, MessageBuffer*> buffers_;    // fd -> MessageBuffer*
+
+	// Helper methods
+	void createServerSocket();
+	void bindSocket();
+	void listenSocket();
+	void setNonBlocking(int fd);
 public:
 	// Constructor: initialize server with configuration
 	Server(const Config& config);
@@ -54,21 +71,8 @@ public:
 	static volatile	sig_atomic_t running_;
 	int getServerFd() const;
 	Poller* getPoller() const { return poller_; }
-
-private:
-	int serverSocketFd_;
-	Config config_;
-	Poller* poller_;
-
-	// Client and channel storage
-	std::map<int, Client*> clients_;           // fd -> Client*
-	// std::map<std::string, Channel*> channels_; // channel name -> Channel*
-
-	// Helper methods
-	void createServerSocket();
-	void bindSocket();
-	void listenSocket();
-	void setNonBlocking(int fd);
+	//103******* MessageBuffer
+	MessageBuffer* getBuffer(int fd);
 };
 
 #endif

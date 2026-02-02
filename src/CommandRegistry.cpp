@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandRegistry.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 23:31:17 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/27 01:00:30 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/02 20:31:37 by oostapen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,14 +60,20 @@ bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd
         return true;
     }
 
+	// 108******* ClientMethods tmp commented (Alex)(Issue 1.3)
     // Command not found: Send ERR_UNKNOWNCOMMAND (421)
-    std::string nick = client.getNickname();
-    if (nick.empty())
-        nick = "*";
-    std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
-    server.sendToClient(client.getFd(), msg);
-    
-    return false;
+	// TODO: Enable when Client methods ready
+    // std::string nick = client.getNickname();
+    // if (nick.empty())
+    //     nick = "*";
+    // std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
+    // server.sendToClient(client.getFd(), msg);
+
+	// 108******* ClientMethods tmp commented (Alex)(Issue 1.3)
+	(void)server;  // suppress unused warning 
+	(void)client;  // suppress unused warning
+	(void)cmd;     // suppress unused warning
+	return false;
 }
 
 // Method - registerCommand()
@@ -96,8 +102,10 @@ bool CommandRegistry::hasCommand(const std::string& command) const
 // - Register all command handlers
 void CommandRegistry::initializeHandlers()
 {
+	// 110******* Commands tmp disabled (Alex)(Issue 1.3)
+    // TODO: Enable when command handlers implemented
     // Register commands here when implemented
-    registerCommand("PASS", handlePass);
+    // registerCommand("PASS", handlePass);
     // registerCommand("NICK", handleNick);
     // ...
 }

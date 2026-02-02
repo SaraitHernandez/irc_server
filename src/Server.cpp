@@ -144,12 +144,12 @@ void	Server::run() {
 // - removeChannel(const std::string& name)
 
 // DONE: createServerSocket(): socket(), set socket options
-void Server::createServerSocket() {
-    serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocketFd_ < 0) throw std::runtime_error("socket failed");
-    
-    int opt = 1;
-    setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+void	Server::createServerSocket() {
+	serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0);
+	if (serverSocketFd_ < 0) throw std::runtime_error("socket failed");
+
+	int opt = 1;
+	setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 }
 
 // DONE: bindSocket(): bind() with config port
@@ -205,6 +205,12 @@ Client*	Server::getClient(int fd) {
 	return (it != clients_.end()) ? it->second : NULL;
 }
 
+// DONE: getBuffer(int fd)
+MessageBuffer* Server::getBuffer(int fd) {
+	std::map<int, MessageBuffer*>::iterator it = buffers_.find(fd);
+	return (it != buffers_.end()) ? it->second : NULL;
+}
+
 // Stub implementations for Network phase
 // DOING: Accept new connection, create Client, add to Poller
 void	Server::handleNewConnection() {
@@ -230,6 +236,12 @@ void	Server::handleNewConnection() {
 	//10*******create Client object and register in map
 	Client* client = new Client(clientFd);// allocate on heap
 	clients_[clientFd] = client;// register fd->client mapping
+
+	//104******* MessageBuffer
+	// create MessageBuffer and register in map 
+	MessageBuffer* buffer = new MessageBuffer();
+	buffers_[clientFd] = buffer;
+
 
 	// add to Poller
 	poller_->addFd(clientFd, POLLIN);
@@ -266,13 +278,34 @@ void	Server::handleClientInput(int fd) {
 		std::cout << "=== handleClientInput DEBUG MSG: (disconnected 'Ctrl+C') ===" << std::endl;
 		return;
 	}
-	//data received
-	std::cout << "[Server] Case: bytesRead > 0 (" << bytesRead << " bytes)" << std::endl;
-	// debug: output of data received
-	buffer[bytesRead] = '\0';
-	std::cout << "[Server] Received from fd=" << fd 
-				<< ": " << buffer << std::endl;
-	std::cout << "=== DEBUG MSG: handleClientInput ===" << std::endl;
+	//data received 107******* MessageBuffer
+	std::cout << "[Server] Received " << bytesRead << " bytes from fd=" << fd << std::endl;
+
+	// Get client and buffer
+	Client* client = getClient(fd);
+	MessageBuffer* msgBuffer = getBuffer(fd);
+
+	if (!client || !msgBuffer) {
+		std::cerr << "[Server] ERROR: client or buffer not found for fd=" << fd << std::endl;
+		return;
+	}
+
+	// Append to MessageBuffer
+	msgBuffer->append(std::string(buffer, bytesRead));
+
+	// Extract complete messages
+	std::vector<std::string> messages = msgBuffer->extractMessages();
+
+	// Process each complete message
+	for (size_t i = 0; i < messages.size(); ++i) {
+		std::cout << "[Server] Complete message: " << messages[i] << std::endl;
+		
+		// TODO (Issue 1.3): Parser integration
+		// IRCMessage msg = parser_.parse(messages[i]);
+		// registry_.execute(this, client, msg);
+	}
+	//data received 107******* MessageBuffer END
+	std::cout << "=== DEBUG MSG: handleClientInput END ===" << std::endl;
 }
 
 // DOING: Remove client from all channels, close socket, delete Client
@@ -306,8 +339,19 @@ void	Server::disconnectClient(int fd) {
 	// 3) remove from clients_ map
 	clients_.erase(fd);
 
+	//105******* MessageBuffer
+	// 3.5) remove MessageBuffer
+	MessageBuffer* buffer = getBuffer(fd);
+	if (buffer) {
+		delete buffer;
+		buffers_.erase(fd);
+	}
+	//114******* DBG MLT MSG
 	// 4) remove from Poller
 	poller_->removeFd(fd);
+	std::cout << "[DEBUG] AFTER removeFd, calling getServerFd()=" 
+          << getServerFd() << std::endl;
+	//114******* DBG END
 
 	// 5) close socket
 	close(fd);

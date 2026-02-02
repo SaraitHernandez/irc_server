@@ -51,6 +51,11 @@ void	Poller::addFd(int fd, short events) {
 // - Remove from vector
 // - Update indices if needed
 void	Poller::removeFd(int fd) {
+	//113******* DBG MLT MSG 2T
+	std::cout << "[Poller] === removeFd(" << fd << ") START ===" << std::endl;
+    std::cout << "[Poller] pollfds_.size() BEFORE = " << pollfds_.size() << std::endl;
+	//113******* DBG END
+
 	for (std::vector<struct pollfd>::iterator it = pollfds_.begin();
 			it != pollfds_.end(); ++it) {
 		if (it->fd == fd) {
@@ -61,6 +66,15 @@ void	Poller::removeFd(int fd) {
 	}
 	// ← if we here, fd was not found *******3
 	std::cerr << "[Poller] WARNING: fd=" << fd << " not found!" << std::endl;
+
+	//114******* DBG MLT MSG 2T
+    std::cout << "[Poller] pollfds_.size() AFTER = " << pollfds_.size() << std::endl;
+    std::cout << "[Poller] Remaining fds: ";
+    for (size_t i = 0; i < pollfds_.size(); ++i) {
+        std::cout << pollfds_[i].fd << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "[Poller] === removeFd() END ===" << std::endl;
 }
 
 // DONE: Implement Poller::poll(int timeout)
@@ -95,6 +109,16 @@ int Poller::poll(int timeout) {
 //   - If POLLOUT: handle write events (if needed)
 //   - If POLLERR/POLLHUP: call server->disconnectClient(fd)
 void	Poller::processEvents() {
+	//112******* DBG MULT MSG 2T
+	std::cout << "[Poller] === processEvents START ===" << std::endl;
+	std::cout << "[Poller] pollfds_.size() = " << pollfds_.size() << std::endl;
+
+	for (size_t i = 0; i < pollfds_.size(); ++i) {
+		std::cout << "[Poller] pollfds_[" << i << "] fd=" << pollfds_[i].fd 
+					<< " events=0x" << std::hex << pollfds_[i].events << std::dec << std::endl;
+	}
+	//112******* DBG END
+
 	int serverFd = server_->getServerFd();
 
 	for (size_t i = 0; i < pollfds_.size(); ++i) {
