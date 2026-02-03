@@ -144,3 +144,5 @@ Then repeat all test cases (1-3) from Terminal 2.
 - `nc` is a minimal TCP client — does not implement IRC registration flow
 - Server behavior (waiting for complete registration) is **correct per RFC 1459**
 - Manual `Ctrl+C` required to close incomplete registration sessions
+
+![MessageBuffer integration hand test](.cursor/plans/illustration/MessageBuffer_INTEGRATION_HAND_TEST.png)
