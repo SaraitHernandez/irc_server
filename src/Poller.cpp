@@ -11,160 +11,142 @@
 #include <cstring>
 
 // DONE: Implement Poller::Poller(Server* server)
-// - Store server pointer
-// - Initialize pollfds_ vector
 Poller::Poller(Server* server) : server_(server) {
-	pollfds_.reserve(64); // reserved for 64 fd ********1
-	std::cout << "[Poller] Initialized" << std::endl;
+    pollfds_.reserve(64); // Reserve space for 64 file descriptors
+    std::cout << "[Poller] Initialized" << std::endl;
 }
 
 // DONE: Implement Poller::~Poller()
-// - Cleanup if needed
 Poller::~Poller() {
-	std::cout << "[Poller] Destroyed" << std::endl;
+    std::cout << "[Poller] Destroyed" << std::endl;
 }
 
-// DONE: Implement Poller::	(int fd, short events)
-// - Create pollfd structure
-// - Add to pollfds_ vector
-// - Set fd, events, and revents (initially 0)
-void	Poller::addFd(int fd, short events) {
-	// check: does fd exists already? *******2
-	for (size_t i = 0; i < pollfds_.size(); ++i) {
-		if (pollfds_[i].fd == fd) {
-			std::cerr << "[Poller] WARNING: fd=" << fd 
-						<< " already exists!" << std::endl;
-			return;
-		}
-	}
-	struct pollfd pfd;
-	pfd.fd = fd;
-	pfd.events = events;
-	pfd.revents = 0;
-	pollfds_.push_back(pfd);
+// DONE: Implement Poller::addFd(int fd, short events)
+void Poller::addFd(int fd, short events) {
+    // Check if fd already exists
+    if (findFdIndex(fd) != -1) {
+        std::cerr << "[Poller] WARNING: fd=" << fd 
+                    << " already exists!" << std::endl;
+        return;
+    }
+    
+    struct pollfd pfd;
+    pfd.fd = fd;
+    pfd.events = events;
+    pfd.revents = 0;
+    pollfds_.push_back(pfd);
 
-	std::cout << "[Poller] Added fd=" << fd << " events=0x" << std::hex << events << std::dec << std::endl;
+    std::cout << "[Poller] Added fd=" << fd << std::endl;
 }
 
 // DONE: Implement Poller::removeFd(int fd)
-// - Find fd in pollfds_ vector
-// - Remove from vector
-// - Update indices if needed
-void	Poller::removeFd(int fd) {
-	//113******* DBG MLT MSG 2T
-	std::cout << "[Poller] === removeFd(" << fd << ") START ===" << std::endl;
-    std::cout << "[Poller] pollfds_.size() BEFORE = " << pollfds_.size() << std::endl;
-	//113******* DBG END
-
-	for (std::vector<struct pollfd>::iterator it = pollfds_.begin();
-			it != pollfds_.end(); ++it) {
-		if (it->fd == fd) {
-			std::cout << "[Poller] Removed fd=" << fd << std::endl;
-			pollfds_.erase(it);
-			return;
-		}
-	}
-	// ← if we here, fd was not found *******3
-	std::cerr << "[Poller] WARNING: fd=" << fd << " not found!" << std::endl;
-
-	//114******* DBG MLT MSG 2T
-    std::cout << "[Poller] pollfds_.size() AFTER = " << pollfds_.size() << std::endl;
-    std::cout << "[Poller] Remaining fds: ";
-    for (size_t i = 0; i < pollfds_.size(); ++i) {
-        std::cout << pollfds_[i].fd << " ";
+void Poller::removeFd(int fd) {
+    int index = findFdIndex(fd);
+    if (index != -1) {
+        pollfds_.erase(pollfds_.begin() + index);
+        std::cout << "[Poller] Removed fd=" << fd << std::endl;
+    } else {
+        std::cerr << "[Poller] WARNING: fd=" << fd << " not found!" << std::endl;
     }
-    std::cout << std::endl;
-    std::cout << "[Poller] === removeFd() END ===" << std::endl;
 }
 
 // DONE: Implement Poller::poll(int timeout)
 // ONLY PLACE poll() IS CALLED - see TEAM_CONVENTIONS.md
-// - Call ::poll(pollfds_.data(), pollfds_.size(), timeout)
-// - Handle errors
-// - Return number of ready file descriptors
 int Poller::poll(int timeout) {
-	if (pollfds_.empty()) {
-		return 0;
-	}
-	
-	int ready = ::poll(&pollfds_[0], pollfds_.size(), timeout);
-    //          ↑↑
-    //          prefix :: search in global
-	if (ready < 0) {
-		if (errno == EINTR) {
-			return 0;  // Signal interrupt - normal
-		}
-		std::cerr << "[Poller] poll() error: " << strerror(errno) << std::endl;
-		return 0;
-	}
-	return ready;
+    if (pollfds_.empty()) {
+        return 0;
+    }
+    
+    int ready = ::poll(&pollfds_[0], pollfds_.size(), timeout);  // Call global poll()
+    if (ready < 0) {
+        if (errno == EINTR) {
+            return 0;  // Signal interrupt - normal
+        }
+        std::cerr << "[Poller] poll() error: " << strerror(errno) << std::endl;
+        return 0;
+    }
+    return ready;
 }
 
 // DONE: Implement Poller::processEvents()
-// - Iterate through pollfds_
-// - For each fd with events:
-//   - If POLLIN: check if server socket or client socket
-//     - Server socket: call server->handleNewConnection()
-//     - Client socket: call server->handleClientInput(fd)
-//   - If POLLOUT: handle write events (if needed)
-//   - If POLLERR/POLLHUP: call server->disconnectClient(fd)
-void	Poller::processEvents() {
-	//112******* DBG MULT MSG 2T
-	std::cout << "[Poller] === processEvents START ===" << std::endl;
-	std::cout << "[Poller] pollfds_.size() = " << pollfds_.size() << std::endl;
+void Poller::processEvents() {
+    int serverFd = server_->getServerFd();
 
-	for (size_t i = 0; i < pollfds_.size(); ++i) {
-		std::cout << "[Poller] pollfds_[" << i << "] fd=" << pollfds_[i].fd 
-					<< " events=0x" << std::hex << pollfds_[i].events << std::dec << std::endl;
-	}
-	//112******* DBG END
-
-	int serverFd = server_->getServerFd();
-
-	for (size_t i = 0; i < pollfds_.size(); ++i) {
-		int fd = pollfds_[i].fd;
-		short revents = pollfds_[i].revents;
-		
-		if (revents == 0) continue;
-		
-		std::cout << "[Poller] fd=" << fd << " revents=0x" 
-					<< std::hex << revents << std::dec;
-		
-		// DEBUG: loging events
-		if (revents & POLLIN)  std::cout << " POLLIN";
-		if (revents & POLLHUP) std::cout << " POLLHUP";
-		if (revents & POLLERR) std::cout << " POLLERR";
-		std::cout << std::endl;
-		
-		if (fd == serverFd) {
-			// new connection on server socket
-			if (revents & POLLIN) {
-				server_->handleNewConnection();
-			}
-		} else {
-			// client socket: proceeds POLLIN or POLLHUP
-			if (revents & (POLLIN | POLLHUP)) {
-				// handleClientInput proceeds recv() == 0
-				server_->handleClientInput(fd);
-			}
-			// POLLERR: criticall socket error
-			else if (revents & POLLERR) {
-				std::cerr << "[Poller] POLLERR on fd=" << fd << std::endl;
-				server_->disconnectClient(fd);
-			}
-		}
-	}
+    for (size_t i = 0; i < pollfds_.size(); ++i) {
+        int fd = pollfds_[i].fd;
+        short revents = pollfds_[i].revents;
+        
+        if (revents == 0) continue;
+        
+        std::cout << "[Poller] fd=" << fd << " revents=0x" 
+                    << std::hex << revents << std::dec;
+        
+        // Log events
+        if (revents & POLLIN)  std::cout << " POLLIN";
+        if (revents & POLLHUP) std::cout << " POLLHUP";
+        if (revents & POLLERR) std::cout << " POLLERR";
+        std::cout << std::endl;
+        
+        if (fd == serverFd) {
+            // New connection on server socket
+            if (revents & POLLIN) {
+                server_->handleNewConnection();
+            }
+        } else {
+            // Client socket: process POLLIN or POLLHUP
+            if (revents & (POLLIN | POLLHUP)) {
+                // handleClientInput handles recv() == 0
+                server_->handleClientInput(fd);
+            }
+            // POLLERR: critical socket error
+            else if (revents & POLLERR) {
+                std::cerr << "[Poller] POLLERR on fd=" << fd << std::endl;
+                server_->disconnectClient(fd);
+            }
+        }
+    }
 }
 
+// Helper methods
+// - findFdIndex(): internal search (used by addFd, removeFd, hasEvent)
+// - hasEvent(): check specific event for fd (useful for Server POLLOUT handling)
+// - updatePollfds(): ensures vector consistency (future: rebuild from map for transcendence)
 
-// TODO: Implement Poller::hasEvent(int fd, short event) const
-// - Find fd in pollfds_
-// - Check if revents has the specified event
+// DONE: Implement Poller::hasEvent(int fd, short event) const
+bool Poller::hasEvent(int fd, short event) const {
+    int index = findFdIndex(fd);
+    if (index == -1) return false;
+    return (pollfds_[index].revents & event) != 0;
+}
 
-// TODO: Implement Poller::findFdIndex(int fd) const
-// - Linear search through pollfds_
-// - Return index or -1 if not found
+// DONE: Implement Poller::findFdIndex(int fd) const
+int Poller::findFdIndex(int fd) const {
+    for (size_t i = 0; i < pollfds_.size(); ++i) {
+        if (pollfds_[i].fd == fd) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
 
-// TODO: Implement Poller::updatePollfds()
-// - Rebuild pollfds_ if needed (usually not necessary)
-
+// DONE: Implement Poller::updatePollfds()
+// Current: ensures vector consistency
+// Future: will rebuild from map<fd, FdInfo> for transcendence (roles, priorities)
+void Poller::updatePollfds() {
+    // Current implementation: clear revents for consistency
+    for (size_t i = 0; i < pollfds_.size(); ++i) {
+        pollfds_[i].revents = 0;
+    }
+    
+    // Future (transcendence): rebuild from map with priorities
+    // When adding std::map<int, FdInfo> descriptors_:
+    /*
+    pollfds_.clear();
+    for (auto& kv : descriptors_) {
+        if (kv.second.active) {
+            struct pollfd pfd = {kv.first, kv.second.events, 0};
+            pollfds_.push_back(pfd);
+        }
+    }
+    */
+}

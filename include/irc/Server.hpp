@@ -1,13 +1,13 @@
 #ifndef SERVER_HPP
-#define SERVER_HPP
+# define SERVER_HPP
 
 #include <string>
 #include <map>
-#include <csignal>		// sig_atomic_t, signal(), SIGINT
-#include "Client.hpp"	// Client*
-#include "Poller.hpp"	// poller_
-#include "Config.hpp"	// config_.getPort()
-#include "irc/MessageBuffer.hpp" //100******* MessageBuffer
+#include <csignal>	
+#include "Client.hpp"
+#include "Poller.hpp"
+#include "Config.hpp"
+#include "irc/MessageBuffer.hpp"
 
 // Main server class - manages socket, connections, and I/O
 // Coordinates between Poller, Parser, and Command handlers
@@ -19,16 +19,17 @@ private:
 	Poller* poller_;
 
 	// Client and channel storage
-	std::map<int, Client*> clients_;           // fd -> Client*
+	std::map<int, Client*> clients_;        // fd -> Client*
 	// std::map<std::string, Channel*> channels_; // channel name -> Channel*
-	//101******* MessageBuffer
-	std::map<int, MessageBuffer*> buffers_;    // fd -> MessageBuffer*
+
+	std::map<int, MessageBuffer*> buffers_; // fd -> MessageBuffer*
 
 	// Helper methods
 	void createServerSocket();
 	void bindSocket();
 	void listenSocket();
 	void setNonBlocking(int fd);
+
 public:
 	// Constructor: initialize server with configuration
 	Server(const Config& config);
@@ -67,11 +68,10 @@ public:
 	// void addClient(int fd);
 	// void removeClient(int fd);
 
-	/*******5 server::run() SIGINT for Ctrl+C */
+	// SIGINT for Ctrl+C
 	static volatile	sig_atomic_t running_;
 	int getServerFd() const;
 	Poller* getPoller() const { return poller_; }
-	//103******* MessageBuffer
 	MessageBuffer* getBuffer(int fd);
 };
 

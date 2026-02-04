@@ -112,11 +112,10 @@ std::string Replies::simple(const std::string& cmd, const std::string& params, c
 std::string Replies::formatClientPrefix(const Client& client)
 {
     std::stringstream ss;
-	// 109******* ClientMethods tmp commented (Alex)(Issue 1.3)
 	// TODO: Enable when Client methods ready
     // ss << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname();
 	(void)client;  // suppress unused warning
-	ss << "*!*@*";  // placeholder prefix
+	ss << "*!*@*";  // placeholder prefix 
 	return ss.str();
 }
 
