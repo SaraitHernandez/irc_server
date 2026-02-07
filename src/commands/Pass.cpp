@@ -1,6 +1,7 @@
 // PASS command handler
 // Sets password for client connection
 // Format: PASS <password>
+// Follows TEAM_CONVENTIONS.md for Halloy compatibility
 
 #include "irc/Server.hpp"
 #include "irc/Client.hpp"
@@ -8,16 +9,69 @@
 #include "irc/Replies.hpp"
 #include "irc/commands/Pass.hpp"
 
-// TODO: Implement handlePass(Server& server, Client& client, const Command& cmd)
-// Function signature: void handlePass(Server& server, Client& client, const Command& cmd)
-//
-// Logic:
-// 1. Check if client is already registered -> send ERR_ALREADYREGISTRED
-// 2. Check if password parameter is provided -> send ERR_NEEDMOREPARAMS
-// 3. Get server password from Config
-// 4. Compare provided password with server password
-// 5. If match: set password on client using client.setPassword()
-// 6. If no match: send ERR_PASSWDMISMATCH (or just ignore, depends on spec)
-// 7. After PASS is set, check if client can register (has NICK and USER)
-//    - If yes, call client.registerClient() and send welcome messages
+// Helper to get param safely (returns empty string if out of bounds)
+static std::string getParam(const Command& cmd, size_t index) {
+    if (index < cmd.params.size()) {
+        return cmd.params[index];
+    }
+    return "";
+}
 
+void handlePass(Server& server, Client& client, const Command& cmd) {
+    int fd = client.getFd();
+    
+    // Get current nick for error messages (use "*" if not set)
+    std::string nick = client.getNicknameDisplay();
+    if (nick.empty()) {
+        nick = "*";
+    }
+    
+    // 1. Already past PASS stage? (step > 1 means NICK already done)
+    if (client.getRegistrationStep() > 1) {
+        server.sendToClient(fd, Replies::numeric(
+            Replies::ERR_ALREADYREGISTRED,
+            nick,
+            "",
+            "You may not reregister"));
+        return;
+    }
+    
+    // 2. Missing or empty parameter?
+    std::string password = getParam(cmd, 0);
+    if (cmd.params.empty() || password.empty()) {
+        server.sendToClient(fd, Replies::numeric(
+            Replies::ERR_NEEDMOREPARAMS,
+            nick,
+            "PASS",
+            "Not enough parameters"));
+        return;
+    }
+    
+    // 3. Check password against server password
+    if (password != server.getPassword()) {
+        client.incrementPasswordAttempts();
+        
+        // Halloy compatibility: allow up to 3 attempts
+        if (client.hasExceededPasswordAttempts()) {
+            // Max attempts exceeded - disconnect
+            server.sendToClient(fd, Replies::numeric(
+                Replies::ERR_PASSWDMISMATCH,
+                nick,
+                "",
+                "Password incorrect (max attempts exceeded)"));
+            server.disconnectClient(fd);
+        } else {
+            // Allow retry
+            server.sendToClient(fd, Replies::numeric(
+                Replies::ERR_PASSWDMISMATCH,
+                nick,
+                "",
+                "Password incorrect"));
+        }
+        return;
+    }
+    
+    // 4. Success - move from step 0 to step 1
+    client.setPassword();
+    // No response needed on success - client proceeds to NICK
+}

@@ -1,59 +1,190 @@
 // Client implementation
 // Manages client state, registration, and message buffer
+// Follows TEAM_CONVENTIONS.md for Halloy compatibility
 
 #include "irc/Client.hpp"
-#include "irc/MessageBuffer.hpp"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "irc/Utils.hpp"
+#include <algorithm>
 
-// TODO: Implement Client::Client(int fd)
-// - Initialize fd_
-// - Initialize all strings as empty
-// - Set all registration flags to false
-// - Initialize MessageBuffer
+// Constructor: initialize with file descriptor
+Client::Client(int fd)
+    : fd_(fd)
+    , registrationStep_(0)
+    , passwordAttempts_(0)
+{
+}
 
-// TODO: Implement Client::~Client()
-// - Cleanup if needed (buffer cleanup handled by MessageBuffer destructor)
+// Destructor
+Client::~Client() {
+    // Cleanup if needed
+    // Buffer cleanup handled automatically by std::string destructor
+}
 
-// TODO: Implement getters
-// - getFd() const
-// - getNickname() const
-// - getUsername() const
-// - getHostname() const
-// - getRealname() const
+// ============================================================================
+// File descriptor
+// ============================================================================
 
-// TODO: Implement setters
-// - setNickname(const std::string& nickname)
-//   - Validate nickname (use Utils::isValidNickname)
-//   - Set nickname_ and nicknameSet_
-// - setUsername(const std::string& username, const std::string& realname)
-//   - Set username_, realname_, and usernameSet_
-// - setHostname(const std::string& hostname)
-//   - Or get from socket using getpeername() and inet_ntoa()
+int Client::getFd() const {
+    return fd_;
+}
 
-// TODO: Implement registration state methods
-// - isRegistered() const
-// - hasPassword() const
-// - hasNickname() const
-// - hasUsername() const
-// - setPassword(const std::string& password)
-// - registerClient() - set registered_ to true when all required info is set
+// ============================================================================
+// Identity getters
+// ============================================================================
 
-// TODO: Implement channel membership methods
-// - isInChannel(const std::string& channelName) const
-// - isOperator(const std::string& channelName) const - check with Channel
-// - joinChannel(const std::string& channelName)
-// - leaveChannel(const std::string& channelName)
-// - getChannels() const
+// Returns LOWERCASE nickname for comparison
+const std::string& Client::getNickname() const {
+    return nickname_;
+}
 
-// TODO: Implement buffer management
-// - appendToBuffer(const std::string& data) - delegate to MessageBuffer
-// - getBuffer() - get buffer string from MessageBuffer
-// - clearBuffer() - clear MessageBuffer
-// - getMessageBuffer() - return reference to MessageBuffer
+// Returns ORIGINAL case nickname for display (Halloy requirement)
+const std::string& Client::getNicknameDisplay() const {
+    return nicknameDisplay_;
+}
 
-// TODO: Implement Client::getPrefix() const
-// - Format: "nick!user@host"
-// - Return formatted string
+const std::string& Client::getUsername() const {
+    return username_;
+}
 
+const std::string& Client::getHostname() const {
+    return hostname_;
+}
+
+const std::string& Client::getRealname() const {
+    return realname_;
+}
+
+// ============================================================================
+// Identity setters
+// ============================================================================
+
+// Set nickname with case handling (Halloy requirement)
+// Stores both lowercase (for comparison) and original (for display)
+void Client::setNickname(const std::string& nickname) {
+    nicknameDisplay_ = nickname;              // "BOB" - original for display
+    nickname_ = Utils::toLower(nickname);     // "bob" - lowercase for comparison
+}
+
+void Client::setUsername(const std::string& username, const std::string& realname) {
+    username_ = username;
+    realname_ = realname;
+}
+
+void Client::setHostname(const std::string& hostname) {
+    hostname_ = hostname;
+}
+
+// ============================================================================
+// Registration state machine (STRICT ORDER: PASS -> NICK -> USER)
+// ============================================================================
+
+int Client::getRegistrationStep() const {
+    return registrationStep_;
+}
+
+// Client is fully registered (step 3)
+bool Client::isRegistered() const {
+    return registrationStep_ >= 3;
+}
+
+// Client has provided correct password (step >= 1)
+bool Client::hasPassword() const {
+    return registrationStep_ >= 1;
+}
+
+// Client has set nickname (step >= 2)
+bool Client::hasNickname() const {
+    return registrationStep_ >= 2;
+}
+
+// Transition: step 0 -> 1 (PASS accepted)
+void Client::setPassword() {
+    if (registrationStep_ == 0) {
+        registrationStep_ = 1;
+    }
+}
+
+// Transition: step 1 -> 2 (NICK set)
+void Client::completeNickStep() {
+    if (registrationStep_ == 1) {
+        registrationStep_ = 2;
+    }
+}
+
+// Transition: step 2 -> 3 (USER set, fully registered)
+void Client::registerClient() {
+    if (registrationStep_ == 2) {
+        registrationStep_ = 3;
+    }
+}
+
+// ============================================================================
+// Password retry mechanism (Halloy: allow up to 3 attempts)
+// ============================================================================
+
+int Client::getPasswordAttempts() const {
+    return passwordAttempts_;
+}
+
+void Client::incrementPasswordAttempts() {
+    ++passwordAttempts_;
+}
+
+bool Client::hasExceededPasswordAttempts() const {
+    return passwordAttempts_ >= MAX_PASSWORD_ATTEMPTS;
+}
+
+// ============================================================================
+// Channel membership
+// ============================================================================
+
+void Client::addChannel(const std::string& channelName) {
+    // Store lowercase for case-insensitive comparison
+    std::string lower = Utils::toLower(channelName);
+    if (!isInChannel(lower)) {
+        channels_.push_back(lower);
+    }
+}
+
+void Client::removeChannel(const std::string& channelName) {
+    std::string lower = Utils::toLower(channelName);
+    std::vector<std::string>::iterator it = 
+        std::find(channels_.begin(), channels_.end(), lower);
+    if (it != channels_.end()) {
+        channels_.erase(it);
+    }
+}
+
+const std::vector<std::string>& Client::getChannels() const {
+    return channels_;
+}
+
+bool Client::isInChannel(const std::string& channelName) const {
+    std::string lower = Utils::toLower(channelName);
+    return std::find(channels_.begin(), channels_.end(), lower) != channels_.end();
+}
+
+// ============================================================================
+// Message buffer management
+// ============================================================================
+
+void Client::appendToBuffer(const std::string& data) {
+    buffer_ += data;
+}
+
+std::string& Client::getBuffer() {
+    return buffer_;
+}
+
+void Client::clearBuffer() {
+    buffer_.clear();
+}
+
+// ============================================================================
+// Client prefix format
+// ============================================================================
+
+// Format: "nick!user@host" (uses display nickname for Halloy compatibility)
+std::string Client::getPrefix() const {
+    return nicknameDisplay_ + "!" + username_ + "@" + hostname_;
+}
