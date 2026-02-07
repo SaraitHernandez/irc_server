@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandRegistry.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 23:31:17 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/27 01:00:30 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/02 20:31:37 by oostapen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ CommandRegistry::CommandRegistry() {
     initializeHandlers();
 }
 
-// Deconstructor
+// Destructor
 CommandRegistry::~CommandRegistry() {}
 
 // Method - execute()
@@ -53,21 +53,25 @@ bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd
     for (size_t i = 0; i < upperCmd.length(); ++i)
         upperCmd[i] = std::toupper(upperCmd[i]);
 
-    std::map<std::string, CommandHandler>::iterator ii = handlers_.find(upperCmd);
-    if (ii != handlers_.end())
+    std::map<std::string, CommandHandler>::iterator it = handlers_.find(upperCmd);
+    if (it != handlers_.end())
 	{
-        ii->second(server, client, cmd);
+        it->second(server, client, cmd);
         return true;
     }
 
-    // Command not found: Send ERR_UNKNOWNCOMMAND (421)
-    std::string nick = client.getNickname();
-    if (nick.empty())
-        nick = "*";
-    std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
-    server.sendToClient(client.getFd(), msg);
-    
-    return false;
+    // TODO (Issue 1.3): Enable when Client methods ready
+    // std::string nick = client.getNickname();
+    // if (nick.empty())
+    //     nick = "*";
+    // std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
+    // server.sendToClient(client.getFd(), msg);
+
+	// Suppress unused warnings until Client methods implemented (Issue 1.3)
+	(void)server; 
+	(void)client;
+	(void)cmd;
+	return false;
 }
 
 // Method - registerCommand()
@@ -96,8 +100,19 @@ bool CommandRegistry::hasCommand(const std::string& command) const
 // - Register all command handlers
 void CommandRegistry::initializeHandlers()
 {
+	// TODO (Issue 1.3): Enable when command handlers implemented
     // Register commands here when implemented
-    registerCommand("PASS", handlePass);
+    // registerCommand("PASS", handlePass);
     // registerCommand("NICK", handleNick);
-    // ...
+    // registerCommand("USER", handleUser);
+    // registerCommand("JOIN", handleJoin);
+    // registerCommand("PART", handlePart);
+    // registerCommand("PRIVMSG", handlePrivmsg);
+    // registerCommand("INVITE", handleInvite);
+    // registerCommand("KICK", handleKick);
+    // registerCommand("TOPIC", handleTopic);
+    // registerCommand("MODE", handleMode);
+    // registerCommand("QUIT", handleQuit);
+    // registerCommand("PING", handlePing);
+    // registerCommand("PONG", handlePong);
 }

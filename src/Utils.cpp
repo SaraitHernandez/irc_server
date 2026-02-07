@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Utils.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/31 14:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 15:30:00 by sarherna          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // Utils implementation
 // Utility functions for string manipulation, validation, formatting
 
@@ -7,7 +19,23 @@
 #include <cctype>
 #include <ctime>
 
-namespace Utils {
+std::string Utils::join(const std::vector<std::string>& strings, const std::string& delimiter)
+{
+    if (strings.empty())
+        return "";
+    
+    std::string result = strings[0];
+    for (size_t i = 1; i < strings.size(); ++i)
+    {
+        result += delimiter;
+        result += strings[i];
+    }
+    return result;
+}
+
+// TODO: Implement Utils::trim(const std::string& str)
+// - Remove leading and trailing whitespace
+// - Return trimmed string
 
 // Remove leading and trailing whitespace
 std::string trim(const std::string& str) {

@@ -1,5 +1,4 @@
 #ifndef UTILS_HPP
-#define UTILS_HPP
 
 #include <string>
 #include <vector>
@@ -7,7 +6,11 @@
 
 // Utility functions for IRC server
 // String manipulation, validation, formatting helpers
-namespace Utils {
+class Utils {
+    public:
+        // Join a vector of strings into a single string separated by delimiter
+        static std::string join(const std::vector<std::string>& strings, const std::string& delimiter);
+
     // String manipulation
     std::string trim(const std::string& str);
     std::string toUpper(const std::string& str);
@@ -32,6 +35,6 @@ namespace Utils {
     // Time utilities
     std::string getCurrentTime();
     time_t getCurrentTimestamp();
-}
+};
 
 #endif // UTILS_HPP

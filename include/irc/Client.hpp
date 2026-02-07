@@ -85,8 +85,7 @@ private:
     // Channel membership (stores lowercase channel names)
     std::vector<std::string> channels_;
     
-    // Message buffer for incomplete messages
-    std::string buffer_;
+    // NOTE: NO MessageBuffer here (Variant 3)
 };
 
 #endif // CLIENT_HPP

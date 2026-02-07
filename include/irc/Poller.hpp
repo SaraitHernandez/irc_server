@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <poll.h>
-// #include "Server.hpp"
+
+class Server;  // Forward declaration
 
 // Poller class - ONLY class that calls poll() system call
 // Manages file descriptor polling and event detection
@@ -11,34 +12,34 @@
 class Poller {
 public:
     // Constructor
-    // Poller(Server* server);
+    Poller(Server* server);
     
     // Destructor
-    // ~Poller();
+    ~Poller();
     
     // Add file descriptor to watch list
-    // void addFd(int fd, short events);
+    void addFd(int fd, short events);
     
     // Remove file descriptor from watch list
-    // void removeFd(int fd);
+    void removeFd(int fd);
     
     // Main polling loop - ONLY place poll() is called
     // Returns number of ready file descriptors
-    // int poll(int timeout = -1);
+    int poll(int timeout = -1);
     
     // Process events after poll() returns
-    // void processEvents();
+    void processEvents();
     
     // Check if a file descriptor has specific event
-    // bool hasEvent(int fd, short event) const;
+    bool hasEvent(int fd, short event) const;
     
 private:
-    // Server* server_;
-    // std::vector<struct pollfd> pollfds_;  // List of file descriptors to poll
+    Server* server_;
+    std::vector<struct pollfd> pollfds_;  // List of file descriptors to poll
     
     // Helper methods
-    // int findFdIndex(int fd) const;
-    // void updatePollfds();
+    int findFdIndex(int fd) const;
+    void updatePollfds();
 };
 
 #endif // POLLER_HPP

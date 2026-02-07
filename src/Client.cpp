@@ -1,16 +1,32 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/07 00:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 00:00:00 by sarherna          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // Client implementation
-// Manages client state, registration, and message buffer
+// Manages client state, registration
 // Follows TEAM_CONVENTIONS.md for Halloy compatibility
 
 #include "irc/Client.hpp"
 #include "irc/Utils.hpp"
-#include <algorithm>
+//#include <algorithm>
+//#include <sys/socket.h>
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
 
 // Constructor: initialize with file descriptor
 Client::Client(int fd)
     : fd_(fd)
     , registrationStep_(0)
     , passwordAttempts_(0)
+    , hostname_("unknown")
 {
 }
 

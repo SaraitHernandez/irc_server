@@ -14,8 +14,8 @@
 
 # define MESSAGEBUFFER_HPP
 
-# include <string>
-# include <vector>
+#include <string>
+#include <vector>
 
 // MessageBuffer class - manages incomplete messages
 // Accumulates data until complete messages (ending with CRLF) are found
