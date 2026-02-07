@@ -6,7 +6,7 @@
 /*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 23:21:22 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/26 23:22:02 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/01 22:57:24 by akacprzy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,12 +86,6 @@ bool Parser::parse(const std::string& message, Command& cmd)
     // 5. Params & Trailing
     while (pos < line.length())
 	{
-        // Skip spaces
-        while (pos < line.length() && line[pos] == ' ')
-			pos++;
-        if (pos >= line.length())
-			break;
-
         // Check for trailing parameter (starts with :)
         if (line[pos] == ':')
 		{
@@ -107,7 +101,7 @@ bool Parser::parse(const std::string& message, Command& cmd)
             break;
         }
         cmd.params.push_back(line.substr(pos, end - pos));
-        pos = end;
+        pos = end + 1;
     }
 
     return true;

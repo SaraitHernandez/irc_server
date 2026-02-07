@@ -118,6 +118,29 @@ void test_newline_only()
     printPass("Newline only message ignored");
 }
 
+void test_empty_params_halloy()
+{
+    Parser parser;
+    Command cmd;
+    
+    // Act
+    // "USER  0 * :Real Name" -> USER <empty> 0 * :Real Name
+    bool result = parser.parse("USER   0  * :Real Name\r\n", cmd);
+    
+    // Assert
+    assert(result == true);
+    assert(cmd.command == "USER");
+    assert(cmd.params.size() == 5);
+    assert(cmd.params[0] == "");
+    assert(cmd.params[1] == "");
+    assert(cmd.params[2] == "0");
+    assert(cmd.params[3] == "");
+    assert(cmd.params[4] == "*");
+    assert(cmd.trailing == "Real Name");
+    
+    printPass("Empty parameters (Halloy compatibility)");
+}
+
 int main()
 {
     test_simple_command();
@@ -126,7 +149,8 @@ int main()
     test_case_insensitivity();
     test_empty_trailing();
     test_whitespace_only();
-	test_newline_only();
+    test_newline_only();
+    test_empty_params_halloy();
     std::cout << "\nAll Parser tests passed!" << std::endl;
     return 0;
 }
