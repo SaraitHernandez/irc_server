@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   User.cpp                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/06 14:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 16:00:00 by sarherna         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // USER command handler
 // Sets username and realname for client
 // Format: USER <username> <mode> <unused> <realname>

@@ -1,6 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Quit.cpp                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/06 14:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 16:00:00 by sarherna         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // QUIT command handler
 // Disconnects client from server
 // Format: QUIT [<reason>]
+// Follows TEAM_CONVENTIONS.md for Halloy compatibility
 
 #include "irc/Server.hpp"
 #include "irc/Client.hpp"
@@ -9,18 +22,28 @@
 #include "irc/Replies.hpp"
 #include "irc/commands/Quit.hpp"
 
-// TODO: Implement handleQuit(Server& server, Client& client, const Command& cmd)
-// Function signature: void handleQuit(Server& server, Client& client, const Command& cmd)
-//
-// Logic:
-// 1. Get quit reason from trailing (default: "Client quit")
-// 2. Get all channels client is in
-// 3. For each channel:
-//    - Broadcast QUIT message: ":nick!user@host QUIT :reason"
-//    - Remove client from channel
-//    - Remove client from channel's operator list if present
-//    - Delete channel if it becomes empty (optional)
-// 4. Remove client from server's client list
-// 5. Close client socket (or mark for disconnection, let Server handle it)
-// 6. Note: Server should call disconnectClient() to clean up
-
+void handleQuit(Server& server, Client& client, const Command& cmd) {
+    // 1. Build QUIT message
+    std::string reason = cmd.trailing.empty() ? "Leaving" : cmd.trailing;
+    std::string quitMsg = ":" + client.getPrefix() + " QUIT :" + 
+                          reason + "\r\n";
+    
+    // 2. Broadcast to all channels the client is in
+    const std::vector<std::string>& channels = client.getChannels();
+    
+    for (size_t i = 0; i < channels.size(); ++i) {
+        Channel* chan = server.getChannel(channels[i]);
+        if (chan) {
+            // Broadcast to all members EXCEPT the quitting client
+            chan->broadcast(&server, quitMsg, &client);
+        }
+    }
+    
+    // 3. Disconnect client (Alex's responsibility)
+    // disconnectClient() will:
+    // - Remove from all channels
+    // - Remove from clients_ map
+    // - Close socket
+    // - Delete Client object
+    server.disconnectClient(client.getFd());
+}
