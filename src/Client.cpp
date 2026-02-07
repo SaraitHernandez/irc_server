@@ -1,91 +1,190 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/07 00:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 00:00:00 by sarherna          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // Client implementation
-// Network Layer: fd, hostname (Alex)
-// Logic Layer: registration, channels (Sarait)
-//
-// NOTE: MessageBuffer exists as a separate module (Parser side).
-// In current Variant 3 design, buffering is handled by BufferManager
-// (Parser/Server), NOT stored inside Client.
+// Manages client state, registration
+// Follows TEAM_CONVENTIONS.md for Halloy compatibility
 
 #include "irc/Client.hpp"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "irc/Utils.hpp"
+//#include <algorithm>
+//#include <sys/socket.h>
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
 
-// Network Layer initialization
-// DONE: Implement Client::Client(int fd)
-// - Initialize fd_
-// - Initialize all strings as empty
-// - Set all registration flags to false
-// - (Buffer is handled externally by MessageBuffer/BufferManager module)
+// Constructor: initialize with file descriptor
+Client::Client(int fd)
+    : fd_(fd)
+    , hostname_("unknown")
+    , registrationStep_(0)
+    , passwordAttempts_(0)
+{
+}
 
-Client::Client(int fd) 
-	: fd_(fd),
-		hostname_("unknown") {
-		// nickname_(""),
-		// username_(""),
-		// realname_(""),
-		// passwordSet_(false),
-		// nicknameSet_(false),
-		// usernameSet_(false),
-		// registered_(false),
-		// registrationStep_(0),
-		// passwordAttempts_(0) {}
-	}
+// Destructor
+Client::~Client() {
+    // Cleanup if needed
+    // Buffer cleanup handled automatically by std::string destructor
+}
 
-// DONE: dtor
-// - Cleanup if needed (buffer cleanup handled by MessageBuffer destructor)
-// Client::~Client() {}
+// ============================================================================
+// File descriptor
+// ============================================================================
 
-// DONE: getFd() const, getHostname() const
-int	Client::getFd() const {
-	return fd_;
+int Client::getFd() const {
+    return fd_;
+}
+
+// ============================================================================
+// Identity getters
+// ============================================================================
+
+// Returns LOWERCASE nickname for comparison
+const std::string& Client::getNickname() const {
+    return nickname_;
+}
+
+// Returns ORIGINAL case nickname for display (Halloy requirement)
+const std::string& Client::getNicknameDisplay() const {
+    return nicknameDisplay_;
+}
+
+const std::string& Client::getUsername() const {
+    return username_;
 }
 
 const std::string& Client::getHostname() const {
-	return hostname_;
+    return hostname_;
 }
 
-// DONE: setHostname
+const std::string& Client::getRealname() const {
+    return realname_;
+}
+
+// ============================================================================
+// Identity setters
+// ============================================================================
+
+// Set nickname with case handling (Halloy requirement)
+// Stores both lowercase (for comparison) and original (for display)
+void Client::setNickname(const std::string& nickname) {
+    nicknameDisplay_ = nickname;              // "BOB" - original for display
+    nickname_ = Utils::toLower(nickname);     // "bob" - lowercase for comparison
+}
+
+void Client::setUsername(const std::string& username, const std::string& realname) {
+    username_ = username;
+    realname_ = realname;
+}
+
 void Client::setHostname(const std::string& hostname) {
-	hostname_ = hostname;
+    hostname_ = hostname;
 }
 
-// TODO: Implement getters
-// - getNickname() const 
-// - getUsername() const
-// - getRealname() const
+// ============================================================================
+// Registration state machine (STRICT ORDER: PASS -> NICK -> USER)
+// ============================================================================
 
-// TODO: Implement setters
-// - setNickname(const std::string& nickname)
-//   - Validate nickname (use Utils::isValidNickname)
-//   - Set nickname_ and nicknameSet_
-// - setUsername(const std::string& username, const std::string& realname)
-//   - Set username_, realname_, and usernameSet_
+int Client::getRegistrationStep() const {
+    return registrationStep_;
+}
 
-//   - Or get from socket using getpeername() and inet_ntoa()
+// Client is fully registered (step 3)
+bool Client::isRegistered() const {
+    return registrationStep_ >= 3;
+}
 
-// TODO: Implement registration state methods
-// - isRegistered() const
-// - hasPassword() const
-// - hasNickname() const
-// - hasUsername() const
-// - setPassword(const std::string& password)
-// - registerClient() - set registered_ to true when all required info is set
+// Client has provided correct password (step >= 1)
+bool Client::hasPassword() const {
+    return registrationStep_ >= 1;
+}
 
-// TODO: Implement channel membership methods
-// - isInChannel(const std::string& channelName) const
-// - isOperator(const std::string& channelName) const - check with Channel
-// - joinChannel(const std::string& channelName)
-// - leaveChannel(const std::string& channelName)
-// - getChannels() const
+// Client has set nickname (step >= 2)
+bool Client::hasNickname() const {
+    return registrationStep_ >= 2;
+}
 
-// NOTE (Variant 3):
-// Buffer management is handled by MessageBuffer/BufferManager
-// on the Parser/Server side, NOT inside Client.
-// this is why here are no methods:
-// appendToBuffer()/getBuffer()/clearBuffer() 
+// Transition: step 0 -> 1 (PASS accepted)
+void Client::setPassword() {
+    if (registrationStep_ == 0) {
+        registrationStep_ = 1;
+    }
+}
 
-// TODO: Implement Client::getPrefix() const
-// - Format: "nick!user@host"
-// - Return formatted string
+// Transition: step 1 -> 2 (NICK set)
+void Client::completeNickStep() {
+    if (registrationStep_ == 1) {
+        registrationStep_ = 2;
+    }
+}
 
+// Transition: step 2 -> 3 (USER set, fully registered)
+void Client::registerClient() {
+    if (registrationStep_ == 2) {
+        registrationStep_ = 3;
+    }
+}
+
+// ============================================================================
+// Password retry mechanism (Halloy: allow up to 3 attempts)
+// ============================================================================
+
+int Client::getPasswordAttempts() const {
+    return passwordAttempts_;
+}
+
+void Client::incrementPasswordAttempts() {
+    ++passwordAttempts_;
+}
+
+bool Client::hasExceededPasswordAttempts() const {
+    return passwordAttempts_ >= MAX_PASSWORD_ATTEMPTS;
+}
+
+// ============================================================================
+// Channel membership
+// ============================================================================
+
+void Client::addChannel(const std::string& channelName) {
+    // Store lowercase for case-insensitive comparison
+    std::string lower = Utils::toLower(channelName);
+    if (!isInChannel(lower)) {
+        channels_.push_back(lower);
+    }
+}
+
+void Client::removeChannel(const std::string& channelName) {
+    std::string lower = Utils::toLower(channelName);
+    std::vector<std::string>::iterator it = 
+        std::find(channels_.begin(), channels_.end(), lower);
+    if (it != channels_.end()) {
+        channels_.erase(it);
+    }
+}
+
+const std::vector<std::string>& Client::getChannels() const {
+    return channels_;
+}
+
+bool Client::isInChannel(const std::string& channelName) const {
+    std::string lower = Utils::toLower(channelName);
+    return std::find(channels_.begin(), channels_.end(), lower) != channels_.end();
+}
+
+// ============================================================================
+// Client prefix format
+// ============================================================================
+
+// Format: "nick!user@host" (uses display nickname for Halloy compatibility)
+std::string Client::getPrefix() const {
+    return nicknameDisplay_ + "!" + username_ + "@" + hostname_;
+}

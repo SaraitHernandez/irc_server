@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Utils.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sarherna <sarherna@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/06 14:00:00 by sarherna          #+#    #+#             */
+/*   Updated: 2026/02/07 16:00:00 by sarherna         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 // Utils implementation
 // Utility functions for string manipulation, validation, formatting
 
@@ -5,6 +17,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <ctime>
 
 std::string Utils::join(const std::vector<std::string>& strings, const std::string& delimiter)
 {
@@ -20,74 +33,129 @@ std::string Utils::join(const std::vector<std::string>& strings, const std::stri
     return result;
 }
 
-// TODO: Implement Utils::trim(const std::string& str)
-// - Remove leading and trailing whitespace
-// - Return trimmed string
+// Remove leading and trailing whitespace
+std::string Utils::trim(const std::string& str) {
+    if (str.empty())
+        return str;
+    
+    size_t start = 0;
+    size_t end = str.length();
+    
+    // Find first non-whitespace
+    while (start < end && std::isspace(static_cast<unsigned char>(str[start])))
+        ++start;
+    
+    // Find last non-whitespace
+    while (end > start && std::isspace(static_cast<unsigned char>(str[end - 1])))
+        --end;
+    
+    return str.substr(start, end - start);
+}
 
-// TODO: Implement Utils::toUpper(const std::string& str)
-// - Convert string to uppercase
-// - Use std::transform with ::toupper
-// - Return uppercase string
+// Convert string to uppercase
+std::string Utils::toUpper(const std::string& str) {
+    std::string result = str;
+    for (size_t i = 0; i < result.length(); ++i) {
+        result[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(result[i])));
+    }
+    return result;
+}
 
-// TODO: Implement Utils::toLower(const std::string& str)
-// - Convert string to lowercase
-// - Use std::transform with ::tolower
-// - Return lowercase string
+// Convert string to lowercase
+std::string Utils::toLower(const std::string& str) {
+    std::string result = str;
+    for (size_t i = 0; i < result.length(); ++i) {
+        result[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(result[i])));
+    }
+    return result;
+}
 
-// TODO: Implement Utils::split(const std::string& str, char delimiter)
-// - Split string by delimiter
-// - Return vector of substrings
-// - Use std::stringstream or manual iteration
+// Split string by delimiter
+std::vector<std::string> Utils::split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(str);
+    std::string token;
+    
+    while (std::getline(ss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    
+    return tokens;
+}
 
-// TODO: Implement Utils::isValidNickname(const std::string& nickname)
-// - Check length (1-9 characters, typically)
-// - Check characters: letters, numbers, special chars [\]^_`{|}-
-// - Cannot start with number
-// - Return true if valid
+// Validate nickname (SIMPLIFIED rules per TEAM_CONVENTIONS.md)
+// Length: 1-9 characters
+// First char: letter or underscore
+// Rest: letters, digits, underscore
+bool Utils::isValidNickname(const std::string& nickname) {
+    if (nickname.empty() || nickname.length() > 9)
+        return false;
+    
+    // First char must be letter or underscore
+    char first = nickname[0];
+    if (!std::isalpha(static_cast<unsigned char>(first)) && first != '_')
+        return false;
+    
+    // Rest must be letters, digits, or underscore
+    for (size_t i = 1; i < nickname.length(); ++i) {
+        char c = nickname[i];
+        if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_')
+            return false;
+    }
+    
+    return true;
+}
 
-// TODO: Implement Utils::isValidChannelName(const std::string& channelName)
-// - Must start with # or &
-// - Valid channel name characters (letters, numbers, special chars)
-// - Length limits
-// - Return true if valid
+// Validate channel name (SIMPLIFIED rules per TEAM_CONVENTIONS.md)
+// Must start with # (only # channels, no & local channels)
+// Length: 2-50 characters (including #)
+// Cannot contain: space, comma, or control characters (0x00-0x1F)
+bool Utils::isValidChannelName(const std::string& channelName) {
+    if (channelName.length() < 2 || channelName.length() > 50)
+        return false;
+    
+    if (channelName[0] != '#')
+        return false;
+    
+    for (size_t i = 1; i < channelName.length(); ++i) {
+        char c = channelName[i];
+        if (c == ' ' || c == ',' || c < 0x20)
+            return false;
+    }
+    
+    return true;
+}
 
-// TODO: Implement Utils::isValidHostname(const std::string& hostname)
-// - Basic validation (can be IP address or domain name)
-// - Return true if valid
+// Check if name is a channel name (starts with #)
+bool Utils::isChannelName(const std::string& name) {
+    return !name.empty() && name[0] == '#';
+}
 
-// TODO: Implement Utils::isChannelChar(char c)
-// - Check if character is valid in channel name
-// - Return true if valid
+// Convert string to integer (C++98 compatible)
+int Utils::stringToInt(const std::string& str) {
+    std::stringstream ss(str);
+    int result = 0;
+    ss >> result;
+    return result;
+}
 
-// TODO: Implement Utils::isChannelName(const std::string& name)
-// - Check if name starts with # or &
-// - Return true if it's a channel name
+// Convert integer to string (C++98 compatible)
+std::string Utils::intToString(int value) {
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
+}
 
-// TODO: Implement Utils::stringToInt(const std::string& str)
-// - Convert string to integer
-// - Handle errors (return 0 or throw exception)
-// - Use std::stringstream or atoi
+// Get current time as formatted string
+std::string Utils::getCurrentTime() {
+    time_t now = std::time(NULL);
+    struct tm* timeinfo = std::localtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+    return std::string(buffer);
+}
 
-// TODO: Implement Utils::intToString(int value)
-// - Convert integer to string
-// - Use std::stringstream or std::to_string (C++11) - check C++98 compatibility
-// - For C++98, use stringstream
-
-// TODO: Implement Utils::logError(const std::string& message)
-// - Log error message to stderr or log file
-// - Format: timestamp + message
-
-// TODO: Implement Utils::logDebug(const std::string& message)
-// - Log debug message (if debug mode enabled)
-// - Format: timestamp + message
-
-// TODO: Implement Utils::getCurrentTime()
-// - Get current time as formatted string
-// - Use strftime or similar
-// - Return formatted time string
-
-// TODO: Implement Utils::getCurrentTimestamp()
-// - Get current time as time_t
-// - Use time() function
-// - Return timestamp
-
+// Get current time as time_t
+time_t Utils::getCurrentTimestamp() {
+    return std::time(NULL);
+}
