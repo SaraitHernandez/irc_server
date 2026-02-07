@@ -39,7 +39,7 @@ all: $(NAME)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 	@mkdir -p $(OBJDIR)/commands
-
+	
 # Link executable (only if object files exist)
 $(NAME): $(OBJDIR) $(OBJECTS)
 	@if [ -z "$(OBJECTS)" ]; then \

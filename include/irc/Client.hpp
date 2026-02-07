@@ -3,21 +3,28 @@
 
 #include <string>
 #include <vector>
-// #include "MessageBuffer.hpp"
+#include <set>
+
 
 // Client class - represents a connected IRC client
-// Manages client state, registration, and message buffer
+// Network Layer (Alex): fd, hostname
+// Logic Layer (Sarait): registration, channels
+//
+// NOTE: MessageBuffer/BufferManager is separate (Variant 3),
+// NOT stored inside Client
 class Client {
 public:
-    // Constructor: initialize with file descriptor
-    // Client(int fd);
-    
-    // Destructor
-    // ~Client();
-    
-    // File descriptor
-    // int getFd() const;
-    
+	// Constructor: initialize with file descriptor
+	Client(int fd);
+
+	// Destructor
+	// ~Client();
+
+	// ========== NETWORK LAYER (Alex) ==========
+	int getFd() const;
+	const std::string& getHostname() const;
+	void setHostname(const std::string& hostname);
+
     // Identity getters
     // const std::string& getNickname() const;
     // const std::string& getUsername() const;
@@ -54,10 +61,11 @@ public:
     // std::string getPrefix() const;
     
 private:
-    // int fd_;
+	// Network Layer
+	int fd_;
+	std::string hostname_;
     // std::string nickname_;
     // std::string username_;
-    // std::string hostname_;
     // std::string realname_;
     // std::string password_;
     
@@ -69,9 +77,8 @@ private:
     
     // Channel membership
     // std::vector<std::string> channels_;
-    
-    // Message buffer for incomplete messages
-    // MessageBuffer buffer_;
+
+    // NOTE: NO MessageBuffer here (Variant 3)
 };
 
 #endif // CLIENT_HPP

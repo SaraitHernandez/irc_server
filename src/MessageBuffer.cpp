@@ -3,19 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   MessageBuffer.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/18 22:00:02 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/18 22:14:49 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/02 22:20:52 by oostapen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc/MessageBuffer.hpp"
+#include <iostream>
 
 // Constructor - Initialize buffer_ as empty string
 MessageBuffer::MessageBuffer() : buffer_("") {}
 
-// Deconstructor - No cleanup needed (string handles it)
+// Destructor - No cleanup needed (string handles it)
 MessageBuffer::~MessageBuffer() {}
 
 // Method - append() data to buffer_
@@ -36,9 +37,14 @@ std::vector<std::string> MessageBuffer::extractMessages()
     size_t pos;
 
     while ((pos = findMessageEnd()) != std::string::npos)
-	{
-        messages.push_back(buffer_.substr(0, pos + 2));
-        buffer_.erase(0, pos + 2);
+    {
+        // Extract message without \r\n
+        std::string msg = buffer_.substr(0, pos);
+        messages.push_back(msg);
+        // Remove message with \r\n (pos points to \r, +2 covers \r\n)
+        buffer_.erase(0, pos + 2); 
+
+        std::cout << "[MessageBuffer] Extracted: \"" << msg << "\"" << std::endl;
     }
     return messages;
 }

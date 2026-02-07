@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   Replies.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
+/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 00:59:12 by akacprzy          #+#    #+#             */
 /*   Updated: 2026/01/31 23:53:37 by akacprzy         ###   ########.fr       */
@@ -112,8 +112,11 @@ std::string Replies::simple(const std::string& cmd, const std::string& params, c
 std::string Replies::formatClientPrefix(const Client& client)
 {
     std::stringstream ss;
-    ss << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname();
-    return ss.str();
+	// TODO: Enable when Client methods ready
+    // ss << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname();
+	(void)client;  // suppress unused warning
+	ss << "*!*@*";  // placeholder prefix 
+	return ss.str();
 }
 
 // Method - formatServerName()
