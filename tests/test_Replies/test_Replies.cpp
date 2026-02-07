@@ -37,7 +37,7 @@ const std::string& Client::getHostname() const {
 
 void test_numeric_reply() {
     // Act
-    std::string result = Replies::numeric("001", "Nick", "Welcome to IRC");
+    std::string result = Replies::numeric("001", "Nick", "", "Welcome to IRC");
     
     // Assert
     // Expected: ":ft_irc 001 Nick :Welcome to IRC\r\n"

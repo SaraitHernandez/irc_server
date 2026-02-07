@@ -6,7 +6,7 @@
 /*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 00:59:12 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/27 23:58:59 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/01/31 23:53:37 by akacprzy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ const std::string Replies::ERR_CHANOPRIVSNEEDED = "482";
 std::string Replies::numeric(const std::string& numeric, const std::string& nickname, const std::string& params, const std::string& trailing)
 {
     std::stringstream ss;
-    ss << Replies::formatServerName() << " " << numeric << " " << nickname;
+    ss << ":" << Replies::formatServerName() << " " << numeric << " " << nickname;
     if (!params.empty())
         ss << " " << params;
     if (!trailing.empty())
@@ -123,5 +123,5 @@ std::string Replies::formatServerName()
 {
     // change it to read from config
     // or to use Server::getServerName() method acc.to conventions
-    return ":ft_irc";
+    return "ft_irc";
 }
