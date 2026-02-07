@@ -33,12 +33,8 @@ std::string Utils::join(const std::vector<std::string>& strings, const std::stri
     return result;
 }
 
-// TODO: Implement Utils::trim(const std::string& str)
-// - Remove leading and trailing whitespace
-// - Return trimmed string
-
 // Remove leading and trailing whitespace
-std::string trim(const std::string& str) {
+std::string Utils::trim(const std::string& str) {
     if (str.empty())
         return str;
     
@@ -57,7 +53,7 @@ std::string trim(const std::string& str) {
 }
 
 // Convert string to uppercase
-std::string toUpper(const std::string& str) {
+std::string Utils::toUpper(const std::string& str) {
     std::string result = str;
     for (size_t i = 0; i < result.length(); ++i) {
         result[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(result[i])));
@@ -66,7 +62,7 @@ std::string toUpper(const std::string& str) {
 }
 
 // Convert string to lowercase
-std::string toLower(const std::string& str) {
+std::string Utils::toLower(const std::string& str) {
     std::string result = str;
     for (size_t i = 0; i < result.length(); ++i) {
         result[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(result[i])));
@@ -75,7 +71,7 @@ std::string toLower(const std::string& str) {
 }
 
 // Split string by delimiter
-std::vector<std::string> split(const std::string& str, char delimiter) {
+std::vector<std::string> Utils::split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
     std::stringstream ss(str);
     std::string token;
@@ -91,7 +87,7 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
 // Length: 1-9 characters
 // First char: letter or underscore
 // Rest: letters, digits, underscore
-bool isValidNickname(const std::string& nickname) {
+bool Utils::isValidNickname(const std::string& nickname) {
     if (nickname.empty() || nickname.length() > 9)
         return false;
     
@@ -114,7 +110,7 @@ bool isValidNickname(const std::string& nickname) {
 // Must start with # (only # channels, no & local channels)
 // Length: 2-50 characters (including #)
 // Cannot contain: space, comma, or control characters (0x00-0x1F)
-bool isValidChannelName(const std::string& channelName) {
+bool Utils::isValidChannelName(const std::string& channelName) {
     if (channelName.length() < 2 || channelName.length() > 50)
         return false;
     
@@ -131,12 +127,12 @@ bool isValidChannelName(const std::string& channelName) {
 }
 
 // Check if name is a channel name (starts with #)
-bool isChannelName(const std::string& name) {
+bool Utils::isChannelName(const std::string& name) {
     return !name.empty() && name[0] == '#';
 }
 
 // Convert string to integer (C++98 compatible)
-int stringToInt(const std::string& str) {
+int Utils::stringToInt(const std::string& str) {
     std::stringstream ss(str);
     int result = 0;
     ss >> result;
@@ -144,14 +140,14 @@ int stringToInt(const std::string& str) {
 }
 
 // Convert integer to string (C++98 compatible)
-std::string intToString(int value) {
+std::string Utils::intToString(int value) {
     std::stringstream ss;
     ss << value;
     return ss.str();
 }
 
 // Get current time as formatted string
-std::string getCurrentTime() {
+std::string Utils::getCurrentTime() {
     time_t now = std::time(NULL);
     struct tm* timeinfo = std::localtime(&now);
     char buffer[80];
@@ -160,8 +156,6 @@ std::string getCurrentTime() {
 }
 
 // Get current time as time_t
-time_t getCurrentTimestamp() {
+time_t Utils::getCurrentTimestamp() {
     return std::time(NULL);
 }
-
-} // namespace Utils

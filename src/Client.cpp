@@ -24,9 +24,9 @@
 // Constructor: initialize with file descriptor
 Client::Client(int fd)
     : fd_(fd)
+    , hostname_("unknown")
     , registrationStep_(0)
     , passwordAttempts_(0)
-    , hostname_("unknown")
 {
 }
 
@@ -178,22 +178,6 @@ const std::vector<std::string>& Client::getChannels() const {
 bool Client::isInChannel(const std::string& channelName) const {
     std::string lower = Utils::toLower(channelName);
     return std::find(channels_.begin(), channels_.end(), lower) != channels_.end();
-}
-
-// ============================================================================
-// Message buffer management
-// ============================================================================
-
-void Client::appendToBuffer(const std::string& data) {
-    buffer_ += data;
-}
-
-std::string& Client::getBuffer() {
-    return buffer_;
-}
-
-void Client::clearBuffer() {
-    buffer_.clear();
 }
 
 // ============================================================================
