@@ -11,6 +11,7 @@ public:
     const std::string& getNickname() const;
     const std::string& getUsername() const;
     const std::string& getHostname() const;
+    std::string getPrefix() const;
     
 private:
     int fd_;

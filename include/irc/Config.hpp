@@ -13,6 +13,7 @@ public:
     // Getters
     int getPort() const;
     const std::string& getPassword() const;
+    static const std::string& getServerName();
     
     // Setters (if needed)
     void setPort(int port);
@@ -24,8 +25,8 @@ public:
 private:
     int port_;
     std::string password_;
+    static const std::string serverName_;
     // Add other configuration options as needed
 };
 
 #endif // CONFIG_HPP
-

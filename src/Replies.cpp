@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Replies.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 00:59:12 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/01/31 23:53:37 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/08 14:30:16 by akacprzy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc/Replies.hpp"
 #include "irc/Client.hpp"
+#include "irc/Config.hpp"
 #include <sstream>
 #include <cstring>
 
@@ -111,12 +112,7 @@ std::string Replies::simple(const std::string& cmd, const std::string& params, c
 // - Return formatted string
 std::string Replies::formatClientPrefix(const Client& client)
 {
-    std::stringstream ss;
-	// TODO: Enable when Client methods ready
-    // ss << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname();
-	(void)client;  // suppress unused warning
-	ss << "*!*@*";  // placeholder prefix 
-	return ss.str();
+    return client.getPrefix();
 }
 
 // Method - formatServerName()
@@ -124,7 +120,5 @@ std::string Replies::formatClientPrefix(const Client& client)
 // - Or return as-is (depends on usage context)
 std::string Replies::formatServerName()
 {
-    // change it to read from config
-    // or to use Server::getServerName() method acc.to conventions
-    return "ft_irc";
+    return Config::getServerName();
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandRegistry.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
+/*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/26 23:31:17 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/02/02 20:31:37 by oostapen         ###   ########.fr       */
+/*   Updated: 2026/02/08 13:41:56 by akacprzy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "irc/Client.hpp"
 #include "irc/Command.hpp"
 #include "irc/Replies.hpp"
+#include "irc/Utils.hpp"
 #include "irc/commands/Pass.hpp"
 #include "irc/commands/Nick.hpp"
 #include "irc/commands/User.hpp"
@@ -49,9 +50,7 @@ bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd
     if (cmd.command.empty())
         return false;
 
-    std::string upperCmd = cmd.command;
-    for (size_t i = 0; i < upperCmd.length(); ++i)
-        upperCmd[i] = std::toupper(upperCmd[i]);
+    std::string upperCmd = Utils::toUpper(cmd.command);
 
     std::map<std::string, CommandHandler>::iterator it = handlers_.find(upperCmd);
     if (it != handlers_.end())
@@ -60,17 +59,12 @@ bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd
         return true;
     }
 
-    // TODO (Issue 1.3): Enable when Client methods ready
-    // std::string nick = client.getNickname();
-    // if (nick.empty())
-    //     nick = "*";
-    // std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
-    // server.sendToClient(client.getFd(), msg);
-
-	// Suppress unused warnings until Client methods implemented (Issue 1.3)
-	(void)server; 
-	(void)client;
-	(void)cmd;
+    // Error reporting
+    std::string nick = client.getNicknameDisplay();
+    if (nick.empty())
+        nick = "*";
+    std::string msg = Replies::numeric(Replies::ERR_UNKNOWNCOMMAND, nick, cmd.command, "Unknown command");
+    server.sendToClient(client.getFd(), msg);
 	return false;
 }
 
@@ -79,9 +73,7 @@ bool CommandRegistry::execute(Server& server, Client& client, const Command& cmd
 // - Store in handlers_ map
 void CommandRegistry::registerCommand(const std::string& command, CommandHandler handler)
 {
-    std::string upperCmd = command;
-    for (size_t i = 0; i < upperCmd.length(); ++i)
-        upperCmd[i] = std::toupper(upperCmd[i]);
+    std::string upperCmd = Utils::toUpper(command);
     handlers_[upperCmd] = handler;
 }
 
@@ -90,9 +82,7 @@ void CommandRegistry::registerCommand(const std::string& command, CommandHandler
 // - Check if exists in handlers_ map
 bool CommandRegistry::hasCommand(const std::string& command) const
 {
-    std::string upperCmd = command;
-    for (size_t i = 0; i < upperCmd.length(); ++i)
-        upperCmd[i] = std::toupper(upperCmd[i]);
+    std::string upperCmd = Utils::toUpper(command);
     return handlers_.find(upperCmd) != handlers_.end();
 }
 
@@ -100,19 +90,17 @@ bool CommandRegistry::hasCommand(const std::string& command) const
 // - Register all command handlers
 void CommandRegistry::initializeHandlers()
 {
-	// TODO (Issue 1.3): Enable when command handlers implemented
-    // Register commands here when implemented
-    // registerCommand("PASS", handlePass);
-    // registerCommand("NICK", handleNick);
-    // registerCommand("USER", handleUser);
-    // registerCommand("JOIN", handleJoin);
-    // registerCommand("PART", handlePart);
-    // registerCommand("PRIVMSG", handlePrivmsg);
-    // registerCommand("INVITE", handleInvite);
-    // registerCommand("KICK", handleKick);
-    // registerCommand("TOPIC", handleTopic);
-    // registerCommand("MODE", handleMode);
-    // registerCommand("QUIT", handleQuit);
-    // registerCommand("PING", handlePing);
-    // registerCommand("PONG", handlePong);
+    registerCommand("PASS", handlePass);
+    registerCommand("NICK", handleNick);
+    registerCommand("USER", handleUser);
+    registerCommand("JOIN", handleJoin);
+    registerCommand("PART", handlePart);
+    registerCommand("QUIT", handleQuit);
+    registerCommand("PRIVMSG", handlePrivmsg);
+    registerCommand("INVITE", handleInvite);
+    registerCommand("KICK", handleKick);
+    registerCommand("TOPIC", handleTopic);
+    registerCommand("MODE", handleMode);
+    registerCommand("PING", handlePing);
+    registerCommand("PONG", handlePong);
 }
