@@ -8,6 +8,7 @@
 #include <string>
 #include "irc/Replies.hpp"
 #include "irc/Client.hpp"
+#include "irc/Config.hpp"
 
 void printPass(const std::string& testName) {
     std::cout << "[PASS] " << testName << std::endl;
@@ -33,7 +34,17 @@ const std::string& Client::getHostname() const {
     static std::string val = "TestHost";
     return val;
 }
+
+std::string Client::getPrefix() const {
+    return getNickname() + "!" + getUsername() + "@" + getHostname();
+}
 // ----------------------------------
+
+// --- Mock Config Implementation ---
+const std::string& Config::getServerName() {
+    static std::string val = "ft_irc";
+    return val;
+}
 
 void test_numeric_reply() {
     // Act

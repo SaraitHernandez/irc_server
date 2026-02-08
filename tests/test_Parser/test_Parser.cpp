@@ -1,5 +1,5 @@
 // How to run test: from main directory run following 2 lines of code:
-// c++ -Wall -Wextra -Werror -std=c++98 -I include src/Parser.cpp tests/test_Parser/test_Parser.cpp -o tests/test_Parser/run_test_Parser
+// c++ -Wall -Wextra -Werror -std=c++98 -I include src/Parser.cpp src/Utils.cpp tests/test_Parser/test_Parser.cpp -o tests/test_Parser/run_test_Parser
 // ./tests/test_Parser/run_test_Parser
 
 #include <iostream>
