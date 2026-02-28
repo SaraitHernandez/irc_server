@@ -16,7 +16,7 @@
 
 #include "irc/Client.hpp"
 #include "irc/Utils.hpp"
-//#include <algorithm>
+#include <algorithm>
 //#include <sys/socket.h>
 //#include <netinet/in.h>
 //#include <arpa/inet.h>

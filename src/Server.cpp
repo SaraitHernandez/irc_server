@@ -4,8 +4,11 @@
 	#include "irc/Server.hpp"
 	#include "irc/Poller.hpp"
 	#include "irc/Client.hpp"
+	#include "irc/Channel.hpp"
 	#include "irc/MessageBuffer.hpp"
 	#include "irc/Config.hpp"
+	#include "irc/Replies.hpp"
+	#include "irc/Utils.hpp"
 	#include <iostream>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -30,6 +33,14 @@
 	// - Close server socket
 	// - Delete all clients
 	Server::~Server() {
+		for (std::map<std::string, Channel*>::iterator it = channels_.begin();
+				it != channels_.end(); ++it) {
+			delete it->second;
+		}
+		for (std::map<int, MessageBuffer*>::iterator it = buffers_.begin();
+				it != buffers_.end(); ++it) {
+			delete it->second;
+		}
 		for (std::map<int, Client*>::iterator it = clients_.begin();
 				it != clients_.end(); ++it) {
 			close(it->first);
@@ -149,6 +160,24 @@
 		setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	}
 
+/*
+void Server::createServerSocket() {
+    // Request kernel to create a TCP/IPv4 socket, returns fd index in process fd table
+    serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0);
+    //  AF_INET   = IPv4 address family
+    //  SOCK_STREAM = reliable ordered byte stream (TCP)
+    //  0         = let kernel pick default protocol (IPPROTO_TCP)
+    if (serverSocketFd_ < 0) throw std::runtime_error("socket failed");
+
+    // SO_REUSEADDR: allow bind() immediately after restart,
+    // skipping the 2-min TIME_WAIT state left by the previous process
+    int opt = 1;
+    setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    //  SOL_SOCKET  = option lives at socket level, not TCP/IP
+    //  &opt = 1    = enable the option
+}
+*/
+
 	// DONE: bindSocket(): bind() with config port
 	void Server::bindSocket() {
 		struct sockaddr_in addr = {};
@@ -201,10 +230,82 @@
 		return (it != clients_.end()) ? it->second : NULL;
 	}
 
+	Client*	Server::getClientByNickname(const std::string& nickname) {
+		std::string lower = Utils::toLower(nickname);
+		for (std::map<int, Client*>::iterator it = clients_.begin();
+				it != clients_.end(); ++it) {
+			if (it->second != NULL && it->second->getNickname() == lower) {
+				return it->second;
+			}
+		}
+		return NULL;
+	}
+
+	const std::string& Server::getPassword() const {
+		return config_.getPassword();
+	}
+
+	Channel* Server::getChannel(const std::string& name) {
+		std::string lower = Utils::toLower(name);
+		std::map<std::string, Channel*>::iterator it = channels_.find(lower);
+		return (it != channels_.end()) ? it->second : NULL;
+	}
+
+	Channel* Server::createChannel(const std::string& name) {
+		Channel* existing = getChannel(name);
+		if (existing != NULL) {
+			return existing;
+		}
+
+		Channel* channel = new Channel(name);
+		channels_[channel->getName()] = channel;
+		return channel;
+	}
+
+	void Server::removeChannel(const std::string& name) {
+		std::string lower = Utils::toLower(name);
+		std::map<std::string, Channel*>::iterator it = channels_.find(lower);
+		if (it == channels_.end()) {
+			return;
+		}
+
+		delete it->second;
+		channels_.erase(it);
+	}
+
 	// DONE: getBuffer(int fd)
 	MessageBuffer* Server::getBuffer(int fd) {
 		std::map<int, MessageBuffer*>::iterator it = buffers_.find(fd);
 		return (it != buffers_.end()) ? it->second : NULL;
+	}
+
+	void Server::sendToClient(int clientFd, const std::string& message) {
+		if (clients_.find(clientFd) == clients_.end()) {
+			return;
+		}
+
+		std::string wire = message;
+		if (wire.size() < 2 || wire.substr(wire.size() - 2) != "\r\n") {
+			wire += "\r\n";
+		}
+
+		ssize_t sent = send(clientFd, wire.c_str(), wire.size(), 0);
+		if (sent < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+			std::cerr << "[Server] send() failed fd=" << clientFd
+					  << ": " << strerror(errno) << std::endl;
+			disconnectClient(clientFd);
+		}
+	}
+
+	void Server::sendResponse(int clientFd, const std::string& numeric,
+							 const std::string& params,
+							 const std::string& trailing) {
+		Client* client = getClient(clientFd);
+		std::string nick = (client != NULL && !client->getNicknameDisplay().empty())
+			? client->getNicknameDisplay()
+			: "*";
+
+		sendToClient(clientFd, Replies::numeric(numeric, nick, params, trailing));
 	}
 
 	// Stub implementations for Network phase

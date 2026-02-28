@@ -5,6 +5,7 @@
 #include <map>
 #include <csignal>	
 #include "Client.hpp"
+#include "Channel.hpp"
 #include "Poller.hpp"
 #include "Config.hpp"
 #include "irc/MessageBuffer.hpp"
@@ -20,7 +21,7 @@ private:
 
 	// Client and channel storage
 	std::map<int, Client*> clients_;        // fd -> Client*
-	// std::map<std::string, Channel*> channels_; // channel name -> Channel*
+	std::map<std::string, Channel*> channels_; // lowercase channel name -> Channel*
 
 	std::map<int, MessageBuffer*> buffers_; // fd -> MessageBuffer*
 
@@ -64,7 +65,13 @@ public:
 
 	// Client management
 	Client* getClient(int fd);
-	// Client* getClientByNickname(const std::string& nickname);
+	Client* getClientByNickname(const std::string& nickname);
+	const std::string& getPassword() const;
+
+	// Channel management
+	Channel* getChannel(const std::string& name);
+	Channel* createChannel(const std::string& name);
+	void removeChannel(const std::string& name);
 	// void addClient(int fd);
 	// void removeClient(int fd);
 
