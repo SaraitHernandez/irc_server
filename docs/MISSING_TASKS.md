@@ -647,7 +647,7 @@ Extract the NAMES sending logic from Join.cpp into a separate command handler.
 
 ### Phase 3: Polish (If time permits)
 8. ⚠️ Sara: Fix Join.cpp bug [Task 8]
-9. ⚠️ Artur: Centralize error format [Task 9]
+9. ⚠️ Sara: Centralize error format [Task 9]
 10. ⚠️ Sara: Implement NOTICE [Task 10] (optional)
 11. ⚠️ Sara: Implement NAMES [Task 11] (optional)
 
