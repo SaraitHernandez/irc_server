@@ -420,18 +420,38 @@ void Server::removeChannel(const std::string& name) {
 // sendToClient
 // ============================================================================
 
-void Server::sendToClient(int clientFd, const std::string& message) {
+void Server::sendToClient(int clientFd, const std::string& message)
+{
 	// Ensure message ends with \r\n
 	std::string msg = message;
 	if (msg.size() < 2 || msg.substr(msg.size() - 2) != "\r\n")
 		msg += "\r\n";
 
 	ssize_t sent = send(clientFd, msg.c_str(), msg.size(), 0);
-	if (sent < 0) {
+	if (sent < 0)
+	{
 		if (errno == EPIPE || errno == ECONNRESET)
 			disconnectClient(clientFd);
 		else if (errno != EAGAIN && errno != EWOULDBLOCK)
 			std::cerr << "[Server] send() error fd=" << clientFd
 						<< ": " << strerror(errno) << std::endl;
 	}
+}
+
+void Server::broadcastToChannel(const std::string& channelName,
+                                const std::string& message,
+                                int excludeFd)
+{
+	// 1. Find the channel (case-insensitive)
+	Channel* channel = getChannel(channelName);
+	if (!channel)
+		return;  // channel doesn't exist, nothing to do
+
+	// 2. Resolve excludeFd to a Client* (NULL means "exclude nobody")
+	Client* exclude = NULL;
+	if (excludeFd >= 0)
+		exclude = getClient(excludeFd);
+
+	// 3. Delegate to Channel::broadcast()
+	channel->broadcast(this, message, exclude);
 }
