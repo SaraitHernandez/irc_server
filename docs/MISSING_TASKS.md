@@ -542,7 +542,7 @@ MODE #test  # Should show user as operator (@user in NAMES)
 
 ### Task 9: Centralize Error Format with `Replies::formatServerName()` [MINOR]
 
-**Owner:** Artur (Dev B - Parser Layer)  
+**Owner:** Sara (Dev B - Parser Layer)  
 **Files:** Multiple command files  
 **Priority:** P3 - CONSISTENCY
 
