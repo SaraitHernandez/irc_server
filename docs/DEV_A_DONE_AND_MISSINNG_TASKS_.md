@@ -17,6 +17,7 @@
 | Task 6 — Real hostname | `inet_ntoa(clientAddr.sin_addr)` → `client->setHostname()` in `handleNewConnection()` | ✅ |
 | Extra — getPassword() | Returns `config_.getPassword()` — needed by Pass.cpp | ✅ |
 | Extra — sendResponse() | Formats `":server numeric params :trailing"` and calls `sendToClient()` | ✅ |
+| Extra — Destructor memory leak | `~Server()`: added delete loops for `buffers_` and `channels_` maps — confirmed by valgrind | ✅ |
 
 ---
 
