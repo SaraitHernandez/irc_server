@@ -4,6 +4,8 @@
 #include "irc/Config.hpp"
 #include <iostream>
 #include <cstdlib>
+#include <stdexcept>
+#include <cctype>
 
 // Initialize static server name
 const std::string Config::serverName_ = "ft_irc";
@@ -33,23 +35,21 @@ void Config::setPassword(const std::string& password) {
 }
 
 Config Config::parseArgs(int argc, char** argv) {
-	int port = 6667;  // Default IRC port
-	std::string password = "";
-
-	for (int i = 1; i < argc; ++i) {
-		std::string arg = argv[i];
-		
-		if (arg == "-p" || arg == "--port") {
-			if (i + 1 < argc) {
-				port = atoi(argv[++i]);
-			}
-		}
-		else if (arg == "-pass" || arg == "--password") {
-			if (i + 1 < argc) {
-				password = argv[++i];
-			}
-		}
+	if (argc != 3) {
+		throw std::runtime_error("Usage: ./ircserv <port> <password>");
 	}
 
-	return Config(port, password);
+	std::string portStr = argv[1];
+	if (portStr.length() > 5)
+		throw std::runtime_error("Invalid port: value too large");
+	for (size_t i = 0; i < portStr.length(); ++i) {
+		if (!std::isdigit(static_cast<unsigned char>(portStr[i])))
+			throw std::runtime_error("Invalid port: must be a number");
+	}
+
+	int port = std::atoi(portStr.c_str());
+	if (port < 1 || port > 65535)
+		throw std::runtime_error("Invalid port: expected range: 1-65535");
+
+	return Config(port, argv[2]);
 }
