@@ -6,13 +6,13 @@
 /*   By: akacprzy <akacprzy@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 23:21:22 by akacprzy          #+#    #+#             */
-/*   Updated: 2026/02/01 22:57:24 by akacprzy         ###   ########.fr       */
+/*   Updated: 2026/02/08 14:09:46 by akacprzy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc/Parser.hpp"
 #include "irc/Command.hpp"
-#include <iostream>
+#include "irc/Utils.hpp"
 
 // Constructor
 Parser::Parser() {}
@@ -78,10 +78,8 @@ bool Parser::parse(const std::string& message, Command& cmd)
     }
     
     // Normalize command to uppercase
-    for (size_t i = 0; i < cmd.command.length(); ++i)
-	{
-        cmd.command[i] = std::toupper(cmd.command[i]);
-    }
+    cmd.command = Utils::toUpper(cmd.command);
+
 
     // 5. Params & Trailing
     while (pos < line.length())

@@ -5,6 +5,9 @@
 #include <iostream>
 #include <cstdlib>
 
+// Initialize static server name
+const std::string Config::serverName_ = "ft_irc";
+
 Config::Config(int port, const std::string& password)
 	: port_(port), password_(password) {
 }
@@ -15,6 +18,10 @@ int Config::getPort() const {
 
 const std::string& Config::getPassword() const {
 	return password_;
+}
+
+const std::string& Config::getServerName() {
+	return serverName_;
 }
 
 void Config::setPort(int port) {
