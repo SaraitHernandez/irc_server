@@ -8,6 +8,8 @@
 #include "Poller.hpp"
 #include "Config.hpp"
 #include "irc/MessageBuffer.hpp"
+#include "Parser.hpp"
+#include "CommandRegistry.hpp"
 
 // Main server class - manages socket, connections, and I/O
 // Coordinates between Poller, Parser, and Command handlers
@@ -17,6 +19,8 @@ private:
 	int serverSocketFd_;
 	Config config_;
 	Poller* poller_;
+	Parser	parser_;
+	CommandRegistry	registry_;
 
 	// Client and channel storage
 	std::map<int, Client*> clients_;        // fd -> Client*
@@ -64,7 +68,7 @@ public:
 
 	// Client management
 	Client* getClient(int fd);
-	// Client* getClientByNickname(const std::string& nickname);
+	Client* getClientByNickname(const std::string& nickname);
 	// void addClient(int fd);
 	// void removeClient(int fd);
 

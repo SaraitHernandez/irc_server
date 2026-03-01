@@ -114,7 +114,7 @@
 	// - Close socket
 	// - Delete Client object
 
-	// TODO: Implement Server::sendToClient(int clientFd, const std::string& message)
+	// TODO: Implement Server::(int clientFd, const std::string& message)
 	// PRIMARY METHOD FOR SENDING DATA - see TEAM_CONVENTIONS.md
 	// - Find client by fd
 	// - Use send() to write message to socket
@@ -290,8 +290,10 @@
 			std::cout << "[Server] Complete message: " << messages[i] << std::endl;
 			
 			// TODO (Issue 1.3): Parser integration
-			// IRCMessage msg = parser_.parse(messages[i]);
-			// registry_.execute(this, client, msg);
+			Command cmd;
+			if (parser_.parse(messages[i], cmd)) {
+				registry_.execute(*this, *client, cmd);
+}
 		}
 	}
 
