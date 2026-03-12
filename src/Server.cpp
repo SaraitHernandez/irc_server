@@ -32,17 +32,39 @@ Server::Server(const Config& config)
 // DONE: Implement Server::~Server()
 // - Close server socket
 // - Delete all clients
+
 Server::~Server() {
-	for (std::map<int, Client*>::iterator it = clients_.begin();
-			it != clients_.end(); ++it) {
-		close(it->first);
-		delete it->second;
-	}
-	if (serverSocketFd_ >= 0) {
-		close(serverSocketFd_); // Server Socket here:)
-	}
-	delete poller_;
+    for (std::map<int, Client*>::iterator it = clients_.begin();
+            it != clients_.end(); ++it) {
+        close(it->first);
+        delete it->second;
+    }
+    for (std::map<int, MessageBuffer*>::iterator it = buffers_.begin();
+            it != buffers_.end(); ++it) {
+        delete it->second;
+    }
+    for (std::map<std::string, Channel*>::iterator it = channels_.begin();
+            it != channels_.end(); ++it) {
+        delete it->second;
+    }
+    if (serverSocketFd_ >= 0) {
+        close(serverSocketFd_);
+    }
+    delete poller_;
 }
+
+
+// Server::~Server() {
+// 	for (std::map<int, Client*>::iterator it = clients_.begin();
+// 			it != clients_.end(); ++it) {
+// 		close(it->first);
+// 		delete it->second;
+// 	}
+// 	if (serverSocketFd_ >= 0) {
+// 		close(serverSocketFd_); // Server Socket here:)
+// 	}
+// 	delete poller_;
+// }
 
 // - Delete all channels (logic Layer)
 
@@ -65,11 +87,10 @@ void	Server::start() {
 }
 
 //SIGINT handler
-static void	signalHandler(int signal) {
-	if (signal == SIGINT) {
-		std::cout << "\n[Server] Received SIGINT, shutting down..." << std::endl;
-		Server::running_ = false;
-	}
+static void	signalHandler(int sig) {
+	(void)sig;
+	std::cout << "\n[Server] Signal received, shutting down..." << std::endl;
+		Server::running_ = false; // works for SIGINT, SIGTERM, SIGQUIT
 }
 
 // DONE: Implement Server::run()
@@ -80,9 +101,10 @@ static void	signalHandler(int signal) {
 //   }
 void	Server::run() {
 	//SIGINT handler
-	signal(SIGINT, signalHandler);
-	signal(SIGTERM, signalHandler);
-
+	signal(SIGINT, signalHandler); // Ctrl+C
+	signal(SIGTERM, signalHandler);// kill <pid>
+	signal(SIGQUIT, signalHandler);// Ctrl+\ — prevent core dump
+	signal(SIGPIPE, SIG_IGN);      // prevent crash on broken client send()
 	std::cout << "[Server] Running event loop..." << std::endl;
 
 	while (running_) {
