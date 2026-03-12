@@ -29,6 +29,7 @@ lsof -i :6667
 
 ```bash
 printf 'NICK test1\r\n' | nc localhost 6667
+# nc -С localhost 6667 # = alternatively = the same
 ```
 
 **Expected Behavior:**
