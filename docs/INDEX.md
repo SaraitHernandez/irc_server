@@ -1,373 +1,378 @@
 # 📚 Documentation Index - IRC Server Project
 
-**Last Updated:** March 12, 2026  
+**Last Updated:** March 1, 2026  
 **Project Status:** ✅ COMPLETE AND FUNCTIONAL
 
 ---
 
-## 🎯 Quick Start (Read These First)
+## 🎯 Quick Start Guide
 
-### For Defense/Evaluation ⭐
-1. **PRESENTATION_GUIDE.md** 🎓
+### Essential Reading (Start Here!)
+
+1. **README.md** (in root folder) ⭐
+   - Project overview and architecture
+   - How to compile and run
+   - Features implemented
+   - Testing instructions
+   - **READ THIS FIRST**
+
+2. **PRESENTATION_GUIDE.md** 🎓
    - Complete defense preparation
    - Demo script (5 minutes)
    - Key concepts explained
    - Common questions & answers
    - **READ THIS BEFORE DEFENSE**
 
-2. **README.md** (in root folder)
-   - Quick project overview
-   - Architecture summary
-   - How to compile and run
-   - What evaluators need to see
-
-3. **FINAL_TEST_REPORT.md**
-   - Complete test results (31/31 passed)
-   - Halloy compatibility (4/4)
-   - Multi-client verification
-   - Proof everything works
-
-### For Sara (You!) 🇪🇸
-1. **RESUMEN_SARA.md**
-   - Tu contribución al proyecto (español)
-   - Lo que completaste
-   - Tu parte del código
-
-2. **PROJECT_COMPLETE.md**
-   - Final summary
-   - Your specific contribution
-   - Testing results
+3. **Testing Documentation** (in `/tests/` folder)
+   - `MANUAL_TESTING_GUIDE.md` - 30 manual test cases
+   - `AUTOMATED_TESTING_GUIDE.md` - Automated tests explained
+   - Test scripts for multi-client and stress testing
 
 ---
 
-## 📋 Project Status Documents
+## 📖 Available Documentation
 
-### Status & Completion
-- **COMPLETION_STATUS.md** - Detailed status of all completed tasks
-- **MISSING_TASKS.md** - Original task list (now all complete!)
-- **PROJECT_COMPLETE.md** - Final project summary
+### Core Documentation
 
-### Quick References
-- **TODO_BY_ROLE.md** - Tasks by developer role
-- **DEV_A_DONE_AND_MISSINNG_TASKS_.md** - Alex's completed work
+#### TEAM_CONVENTIONS.md ⭐ CRITICAL
+The most important document for understanding the project:
+- Module responsibilities (Network, Parser, Logic)
+- Interfaces between components
+- Development contracts and rules
+- IRC protocol requirements
+- Error handling conventions
 
----
+**Sections by Role:**
+- **Network Layer (Alex):** Sections 2, 6 (Server interface, sockets)
+- **Parser Layer (Artur):** Sections 3, 8 (Parser, IRC replies)
+- **Logic Layer (Sara):** Sections 4, 5, 7 (Client, Channel, Commands)
 
-## 📖 Development Documentation
+#### IRC_LOGIC_AND_DATA_STRUCTURE.md
+- IRC protocol details (RFC 1459, RFC 2812)
+- Data model and relationships
+- Implementation decisions
+- State management
 
-### Team Conventions & Architecture
-- **TEAM_CONVENTIONS.md** ⭐ IMPORTANT
-  - Module responsibilities and interfaces
-  - Development rules and contracts
-  - Code organization
-  
-- **DEVELOPMENT_PLAN.md** ⭐ IMPORTANT
-  - Original development roadmap
-  - Epic breakdown
-  - Task dependencies
-
-- **IRC_LOGIC_AND_DATA_STRUCTURE.md**
-  - IRC protocol details
-  - Data model explanation
-  - Implementation decisions
+#### PRESENTATION_GUIDE.md
+- 5-minute demo script
+- Key technical concepts
+- Common evaluation questions
+- Defense preparation checklist
 
 ---
 
-## 🧪 Testing & Quality
+## 🧪 Testing Documentation
 
-### Testing Guides
-- **DEFENSE_GUIDE.md** ⭐ READ FOR DEFENSE
-  - Complete demo script
-  - Q&A for evaluation
-  - Testing checklist
+All testing files are located in the `/tests/` directory:
 
-- **ALEX_TEST_GUIDE.md**
-  - Network layer testing
-  - Performance testing
+### Test Guides
+- **MANUAL_TESTING_GUIDE.md**
+  - 30 detailed manual test cases
+  - Step-by-step commands
+  - Expected output for each test
+  - Verification checklist
 
-### Technical Details
-- **BUFFER_ARCHITECTURE/** folder
-  - Message buffering strategies
-  - Implementation options
+- **AUTOMATED_TESTING_GUIDE.md**
+  - Multi-client test explanation
+  - Stress test (10 clients) details
+  - Parser unit tests
+  - How to run and interpret results
 
----
-
-## 👥 Team Resources
-
-### By Developer Role
-
-**Alex (Dev A - Network Layer)**
-- TEAM_CONVENTIONS.md - Section 2, 6 (Server interface)
-- DEV_A_DONE_AND_MISSINNG_TASKS_.md
-- ALEX_TEST_GUIDE.md
-
-**Artur (Dev B - Parser Layer)**
-- TEAM_CONVENTIONS.md - Section 3, 8 (Parser, Replies)
-- DEVELOPMENT_PLAN.md - EPIC 2
-
-**Sara (Dev C - Logic Layer)** ← YOU!
-- TEAM_CONVENTIONS.md - Section 4, 5, 7 (Client, Channel, Commands)
-- RESUMEN_SARA.md - Tu resumen en español
-- DEVELOPMENT_PLAN.md - EPIC 3, 4, 5
+### Test Scripts
+- `test_multi_clients.sh` - Test multiple concurrent clients
+- `stress_test_10_clients.sh` - Stress test with 10 clients
+- `test_Parser/` - Parser unit tests
 
 ---
 
-## 📊 Project Structure
+## 📂 Project Structure
 
-### Documentation by Topic
+### Source Code Organization
 
-#### Understanding IRC Protocol
-1. IRC_LOGIC_AND_DATA_STRUCTURE.md
-2. TEAM_CONVENTIONS.md - Section 8, 9
-3. PEER_ADVICES_CONCERNING_HALLOY(DBOZIC)/ folder
+```
+include/irc/
+├── Server.hpp          - Main server class
+├── Client.hpp          - Client state management
+├── Channel.hpp         - Channel management
+├── Parser.hpp          - IRC message parser
+├── CommandRegistry.hpp - Command dispatcher
+└── Command.hpp         - Command interface
 
-#### Understanding Architecture
-1. TEAM_CONVENTIONS.md - Section 14 (Module Interaction)
-2. DEVELOPMENT_PLAN.md - General Architecture
-3. our_comments.md
+src/
+├── Server.cpp          - Server implementation
+├── Client.cpp          - Client implementation
+├── Channel.cpp         - Channel implementation
+├── Parser.cpp          - Parser implementation
+├── commands/           - All IRC commands (13 files)
+└── main.cpp            - Entry point
+```
 
-#### Implementation Details
-1. TEAM_CONVENTIONS.md - All sections
-2. BUFFER_ARCHITECTURE/ folder
-3. DEVELOPMENT_PLAN.md - All EPICs
+### Documentation Organization
 
-#### Testing & Evaluation
-1. DEFENSE_GUIDE.md ⭐
-2. ALEX_TEST_GUIDE.md
-3. COMPLETION_STATUS.md
+```
+docs/
+├── INDEX.md                    - This file
+├── TEAM_CONVENTIONS.md         - Development contracts
+├── IRC_LOGIC_AND_DATA_STRUCTURE.md
+├── PRESENTATION_GUIDE.md       - Defense guide
+├── BUFFER_ARCHITECTURE/        - Technical design docs
+└── PEER_ADVICES_CONCERNING_HALLOY(DBOZIC)/
+
+tests/
+├── README.md                   - Testing overview
+├── MANUAL_TESTING_GUIDE.md     - Manual tests
+├── AUTOMATED_TESTING_GUIDE.md  - Automated tests
+└── *.sh                        - Test scripts
+```
 
 ---
 
 ## 🎓 Recommended Reading Order
 
-### For Defense Preparation
+### For Defense/Evaluation (Priority Order)
 
-1. **PROJECT_COMPLETE.md** (5 min)
-   - Get overall project status
-   - See what's implemented
-   - Understand test results
+1. **README.md** (10 min)
+   - Understand what's implemented
+   - See architecture overview
+   - Know how to run the server
 
-2. **RESUMEN_SARA.md** (5 min) 🇪🇸
-   - Tu parte específica
-   - Tu contribución
-   - Preguntas sobre tu código
+2. **PRESENTATION_GUIDE.md** (20 min)
+   - Prepare demo script
+   - Review Q&A section
+   - Understand key concepts
 
-3. **DEFENSE_GUIDE.md** (20 min)
-   - Demo script
-   - Q&A preparation
-   - Testing checklist
+3. **TEAM_CONVENTIONS.md** (30 min)
+   - Focus on your sections (4, 5, 7 for Sara)
+   - Understand module interfaces
+   - Review error codes and conventions
 
-4. **TEAM_CONVENTIONS.md** (30 min)
-   - Review your sections (4, 5, 7)
-   - Understand interfaces
-   - Review error codes
+4. **tests/MANUAL_TESTING_GUIDE.md** (15 min)
+   - Know what tests to demonstrate
+   - Practice key test scenarios
+   - Understand expected behavior
 
-### For Understanding the Codebase
+### For Deep Understanding
 
-1. **DEVELOPMENT_PLAN.md** (30 min)
-   - See how project was built
-   - Understand task breakdown
-   - Know dependencies
+1. **TEAM_CONVENTIONS.md** (full read, 1 hour)
+   - Complete understanding of all modules
+   - All interfaces and contracts
+   - All conventions
 
 2. **IRC_LOGIC_AND_DATA_STRUCTURE.md** (20 min)
-   - IRC protocol basics
+   - IRC protocol details
    - Data model
    - Implementation decisions
 
-3. **TEAM_CONVENTIONS.md** (full read, 1 hour)
-   - Complete understanding
-   - All interfaces
-   - All conventions
+3. **Source Code Review**
+   - Read your implemented sections
+   - Understand module interactions
+   - Review error handling
 
 ---
 
 ## 🔍 Find Information By Topic
 
-### Network Layer (Alex's Work)
-- **Socket operations:** TEAM_CONVENTIONS.md Section 2, 6
-- **Poll() usage:** DEVELOPMENT_PLAN.md EPIC 1
-- **Non-blocking I/O:** ALEX_TEST_GUIDE.md
+### Implementation Questions
 
-### Parser Layer (Artur's Work)
-- **Message parsing:** TEAM_CONVENTIONS.md Section 3
-- **Reply formatting:** TEAM_CONVENTIONS.md Section 8
-- **Buffer handling:** BUFFER_ARCHITECTURE/ folder
+| Topic | Document | Location |
+|-------|----------|----------|
+| How does poll() work? | TEAM_CONVENTIONS.md | Section 2 |
+| Message parsing | TEAM_CONVENTIONS.md | Section 3 |
+| Client management | TEAM_CONVENTIONS.md | Section 4 |
+| Channel management | TEAM_CONVENTIONS.md | Section 5 |
+| Command execution | TEAM_CONVENTIONS.md | Section 7 |
+| Error codes | TEAM_CONVENTIONS.md | Section 8 |
+| Channel modes | TEAM_CONVENTIONS.md | Section 9 |
+| Registration flow | TEAM_CONVENTIONS.md | Section 10 |
 
-### Logic Layer (Your Work!)
-- **Client management:** TEAM_CONVENTIONS.md Section 4
-- **Channel management:** TEAM_CONVENTIONS.md Section 5
-- **Commands:** DEVELOPMENT_PLAN.md EPIC 3, 4, 5
-- **Your summary:** RESUMEN_SARA.md 🇪🇸
+### Testing Questions
 
-### IRC Protocol
-- **Message format:** TEAM_CONVENTIONS.md Section 3
-- **Error codes:** TEAM_CONVENTIONS.md Section 8
-- **Channel modes:** TEAM_CONVENTIONS.md Section 9
-- **Registration:** TEAM_CONVENTIONS.md Section 10
+| Topic | Document | Location |
+|-------|----------|----------|
+| Manual test cases | tests/MANUAL_TESTING_GUIDE.md | All sections |
+| Automated tests | tests/AUTOMATED_TESTING_GUIDE.md | All sections |
+| How to test | tests/README.md | Quick Start |
+| Multi-client testing | tests/test_multi_clients.sh | Script |
+| Stress testing | tests/stress_test_10_clients.sh | Script |
 
-### Testing
-- **Defense prep:** DEFENSE_GUIDE.md
-- **Test cases:** COMPLETION_STATUS.md
-- **Network tests:** ALEX_TEST_GUIDE.md
+### Defense Questions
 
----
-
-## 📱 Quick Reference Cards
-
-### Essential Files for Defense
-```
-Must Read:
-├── DEFENSE_GUIDE.md           ← Demo script & Q&A
-├── RESUMEN_SARA.md            ← Tu parte (español)
-└── PROJECT_COMPLETE.md        ← Project status
-
-Should Review:
-├── TEAM_CONVENTIONS.md        ← Sections 4, 5, 7
-└── COMPLETION_STATUS.md       ← What's done
-```
-
-### Essential Code Locations (Your Work)
-```
-Your Implementations:
-├── src/Client.cpp             ← Client state
-├── src/Channel.cpp            ← Channel state
-├── src/commands/*.cpp         ← All commands
-└── src/Server.cpp:323-333     ← Your final fix!
-```
+| Question | Answer Location |
+|----------|----------------|
+| Can you show me the poll() loop? | PRESENTATION_GUIDE.md → Q&A |
+| How do you handle partial data? | PRESENTATION_GUIDE.md → Q&A |
+| How does registration work? | PRESENTATION_GUIDE.md → Q&A |
+| How do channel operators work? | PRESENTATION_GUIDE.md → Q&A |
+| Case-insensitive handling? | PRESENTATION_GUIDE.md → Q&A |
+| Memory leak prevention? | PRESENTATION_GUIDE.md → Q&A |
 
 ---
 
-## 🎯 Common Questions → Where to Find Answers
+## 👥 Team Responsibilities
 
-### Technical Questions
+### Network Layer - Alex (Dev A)
+**What:** Socket operations, poll() loop, non-blocking I/O  
+**Where:** `src/Server.cpp` (network methods)  
+**Docs:** TEAM_CONVENTIONS.md Sections 2, 6
 
-| Question | Document | Section |
-|----------|----------|---------|
-| How does poll() work? | DEFENSE_GUIDE.md | "Can you show me poll() loop?" |
-| How do you handle partial data? | DEFENSE_GUIDE.md | "How do you handle partial data?" |
-| How does registration work? | DEFENSE_GUIDE.md | "How does registration work?" |
-| How do channel operators work? | DEFENSE_GUIDE.md | "How do channel operators work?" |
-| How do you handle case-insensitive nicknames? | DEFENSE_GUIDE.md | "How do you handle case-insensitive..." |
-| How do you prevent memory leaks? | DEFENSE_GUIDE.md | "How do you prevent memory leaks?" |
+### Parser Layer - Artur (Dev B)
+**What:** IRC message parsing, reply formatting  
+**Where:** `src/Parser.cpp`, `include/irc/Parser.hpp`  
+**Docs:** TEAM_CONVENTIONS.md Sections 3, 8
 
-### Your Contribution Questions
-
-| Question | Document | Section |
-|----------|----------|---------|
-| What did you implement? | RESUMEN_SARA.md | "Tu Contribución Total" |
-| What was your final task? | RESUMEN_SARA.md | "Lo Que Completaste Hoy" |
-| How does Client class work? | TEAM_CONVENTIONS.md | Section 4 |
-| How does Channel class work? | TEAM_CONVENTIONS.md | Section 5 |
-| What commands did you implement? | PROJECT_COMPLETE.md | "Server Features" |
+### Logic Layer - Sara (Dev C)
+**What:** Client/Channel management, all commands  
+**Where:** `src/Client.cpp`, `src/Channel.cpp`, `src/commands/*.cpp`  
+**Docs:** TEAM_CONVENTIONS.md Sections 4, 5, 7
 
 ---
 
-## 🏆 Project Achievements
+## ✅ Project Status
 
-### ✅ What's Complete
-- All critical functionality (7/7 tasks)
-- All required IRC commands (13 commands)
-- All channel modes (5 modes)
-- Proper cleanup and memory management
-- Full documentation
+### Completed Features
 
-### 📚 Documentation Created
-- 17 markdown files
-- 5 new files created today
-- Complete coverage of project
+#### Core Functionality
+- ✅ Non-blocking I/O with poll()
+- ✅ IRC message parsing (RFC 1459/2812)
+- ✅ Client authentication (PASS/NICK/USER)
+- ✅ Channel operations (JOIN/PART/KICK/INVITE)
+- ✅ Private messaging (PRIVMSG)
+- ✅ Channel modes (+i, +t, +k, +o, +l)
+- ✅ Operator privileges
+- ✅ Proper disconnection cleanup
+- ✅ Case-insensitive nickname/channel handling
 
-### 🎉 Ready For
-- Evaluation/Defense
-- Testing with IRC clients
-- Concurrency testing
-- Memory leak testing
+#### Commands Implemented (13 total)
+1. PASS - Password authentication
+2. NICK - Set nickname
+3. USER - Complete registration
+4. JOIN - Join channel
+5. PART - Leave channel
+6. PRIVMSG - Send message
+7. KICK - Kick user
+8. INVITE - Invite user
+9. TOPIC - Get/set topic
+10. MODE - Channel modes
+11. QUIT - Disconnect
+12. PING - Keep-alive
+13. PONG - Keep-alive response
+
+#### Quality Assurance
+- ✅ Compiles with C++98
+- ✅ No compiler warnings
+- ✅ No memory leaks (verified with leaks/valgrind)
+- ✅ Proper error handling
+- ✅ Comprehensive testing (31+ test cases)
+- ✅ Multi-client support verified
+- ✅ Halloy client compatibility
 
 ---
 
-## 📧 Contact & References
+## 🚀 Quick Reference for Defense
 
-### External Resources
-- **RFC 1459** - Original IRC Protocol
-- **RFC 2812** - IRC Client Protocol
-- **Beej's Guide** - Network Programming
-- **42 Subject** - Project requirements
+### Demo Checklist (5 minutes)
 
-### Internal References
-- **assets/** folder - Images and diagrams
-- **BUFFER_ARCHITECTURE/** - Technical design docs
-- **PEER_ADVICES_CONCERNING_HALLOY(DBOZIC)/** - Testing tips
-- **.cursor/plans/** folder - Implementation plans
+1. **Compilation** (30 sec)
+   ```bash
+   make
+   ./ircserv 6667 password123
+   ```
+
+2. **Basic Registration** (1 min)
+   - Connect with nc
+   - Show PASS/NICK/USER sequence
+   - Show successful registration
+
+3. **Channel Operations** (2 min)
+   - JOIN a channel
+   - Show PRIVMSG
+   - Show operator privileges (TOPIC, KICK, MODE)
+
+4. **Multi-client Test** (1.5 min)
+   - Run test_multi_clients.sh
+   - Show multiple clients interacting
+   - Show proper message routing
+
+### Key Points to Emphasize
+
+1. **Non-blocking I/O:** "We use poll() to handle multiple clients without threads"
+2. **Message Buffering:** "MessageBuffer handles partial TCP data and CRLF framing"
+3. **State Machine:** "Strict PASS → NICK → USER registration order"
+4. **Memory Safety:** "All resources cleaned up in disconnectClient()"
+5. **Case-Insensitive:** "Nicknames/channels compared with lowercase, displayed with original case"
 
 ---
 
-## 💡 Tips for Using This Documentation
+## 📊 Testing Coverage
+
+### Test Categories
+
+| Category | Manual Tests | Automated | Coverage |
+|----------|-------------|-----------|----------|
+| Authentication | 4 tests | ✅ | Complete |
+| Channels | 6 tests | ✅ | Complete |
+| Messaging | 4 tests | ✅ | Complete |
+| Modes | 5 tests | ✅ | Complete |
+| Operators | 4 tests | ✅ | Complete |
+| Multi-client | 3 tests | ✅ | Complete |
+| Edge cases | 4 tests | ✅ | Complete |
+
+**Total:** 30+ manual test cases, automated multi-client and stress tests
+
+---
+
+## 💡 Tips for Success
 
 ### Before Defense
-1. Read DEFENSE_GUIDE.md completely
-2. Review RESUMEN_SARA.md (tu parte)
-3. Practice demo from DEFENSE_GUIDE.md
-4. Review Q&A section
-
-### During Implementation
-1. Check TEAM_CONVENTIONS.md for interfaces
-2. Follow DEVELOPMENT_PLAN.md for task order
-3. Reference IRC_LOGIC_AND_DATA_STRUCTURE.md for protocol
-
-### After Completion
-1. Read PROJECT_COMPLETE.md for summary
-2. Check COMPLETION_STATUS.md for what's done
-3. Review MISSING_TASKS.md (all complete!)
-
----
-
-## 🚀 Next Steps
-
-### Immediate (Today/Tomorrow)
-- [x] Complete all critical tasks ✅ DONE
-- [x] Test server functionality ✅ DONE
-- [ ] Read DEFENSE_GUIDE.md
-- [ ] Practice demo
-- [ ] Review Q&A
-
-### Before Defense
-- [ ] Test with irssi or another IRC client
-- [ ] Practice explaining architecture
-- [ ] Review your code sections
-- [ ] Prepare for "what if" questions
+- [ ] Read PRESENTATION_GUIDE.md completely
+- [ ] Practice the 5-minute demo
+- [ ] Review your code sections (Sara: Client, Channel, commands)
+- [ ] Test the server yourself with nc or irssi
+- [ ] Be ready to explain your implementation choices
 
 ### During Defense
-- [ ] Demo server startup
-- [ ] Show basic commands
-- [ ] Show multiple clients
-- [ ] Show operator commands
-- [ ] Explain your implementation
+- [ ] Stay calm and confident
+- [ ] Show don't tell (demo the features)
+- [ ] Explain the "why" not just the "what"
+- [ ] Be honest if you don't know something
+- [ ] Have fun! You built something impressive
+
+### Common Pitfalls to Avoid
+- ❌ Don't just read code without explaining
+- ❌ Don't get lost in details
+- ❌ Don't panic if something doesn't work first try
+- ✅ Do show your understanding of concepts
+- ✅ Do demonstrate real functionality
+- ✅ Do explain trade-offs in your design
 
 ---
 
-## ✨ Final Notes
+## 🎉 Final Notes
+
+### You're Ready!
+
+**Implementation:** ✅ Complete and functional  
+**Testing:** ✅ Thoroughly tested  
+**Documentation:** ✅ Comprehensive  
+**Defense Prep:** ✅ All materials ready
+
+### What Makes This Project Strong
+
+1. **Clean Architecture:** Clear separation between Network, Parser, and Logic layers
+2. **Robust Error Handling:** Proper IRC error codes for all failure cases
+3. **Comprehensive Testing:** 30+ test cases covering all scenarios
+4. **Professional Documentation:** Clear, detailed, and well-organized
+5. **Production-Ready:** Non-blocking I/O, proper cleanup, no memory leaks
 
 ### Remember
-- Your server is COMPLETE and FUNCTIONAL ✅
-- You implemented the ENTIRE Logic Layer 🎯
-- Your final fix completed the project 🎉
-- You're READY for defense 🚀
 
-### Documentation Quality
-- Comprehensive coverage ✅
-- Multiple languages (EN/ES) ✅
-- Code examples included ✅
-- Q&A sections ✅
-- Testing guidance ✅
+This IRC server:
+- Handles multiple concurrent clients
+- Implements the full IRC protocol required
+- Has been tested extensively
+- Is ready for evaluation
 
----
+You built a real network server from scratch. That's impressive! 🚀
 
-**Project:** ft_irc  
-**Status:** ✅ COMPLETE  
-**Documentation:** ✅ COMPREHENSIVE  
-**Ready:** ✅ FOR DEFENSE  
-
-**¡Buena suerte en tu defensa, Sara!** 🎓
-
----
 
 **END OF INDEX**
