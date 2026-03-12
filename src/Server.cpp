@@ -320,19 +320,17 @@ void	Server::disconnectClient(int fd) {
 	}
 
 
-	// 2) TODO (when Dev C(Logic layer)): remove from channels
-	// after Dev C will write Channel::removeClient and Client::getChannels(), ADD:
-	// std::vector<std::string> channels = client->getChannels();
-	// for (size_t i = 0; i < channels.size(); ++i) {
-	//     Channel* chan = getChannel(channels[i]);
-	//     if (chan) {
-	//         chan->removeClient(client);
-	//         if (chan->isEmpty()) {
-	//             delete chan;
-	//             channels_.erase(channels[i]);
-	//         }
-	//     }
-	// }
+	// 2) Remove from channels (Dev C - Logic Layer)
+	std::vector<std::string> channels = client->getChannels();
+	for (size_t i = 0; i < channels.size(); ++i) {
+		Channel* chan = getChannel(channels[i]);
+		if (chan) {
+			chan->removeClient(client);
+			if (chan->isEmpty()) {
+				removeChannel(channels[i]);
+			}
+		}
+	}
 
 	// 3) remove from clients_ map
 	clients_.erase(fd);
