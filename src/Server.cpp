@@ -38,8 +38,16 @@ Server::~Server() {
 		close(it->first);
 		delete it->second;
 	}
+	for (std::map<int, MessageBuffer*>::iterator it = buffers_.begin();
+			it != buffers_.end(); ++it) {
+		delete it->second;
+	}
+	for (std::map<std::string, Channel*>::iterator it = channels_.begin();
+			it != channels_.end(); ++it) {
+		delete it->second;
+	}
 	if (serverSocketFd_ >= 0) {
-		close(serverSocketFd_); // Server Socket here:)
+		close(serverSocketFd_);
 	}
 	delete poller_;
 }
