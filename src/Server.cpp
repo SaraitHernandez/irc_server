@@ -198,7 +198,7 @@ void Server::listenSocket() {
 	std::cout << "[Server] Listening backlog=10" << std::endl;
 }
 
-// DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK (evalsh: без F_GETFL)
+// DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK (without F_GETFL)
 void	Server::setNonBlocking(int fd) {
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 	{

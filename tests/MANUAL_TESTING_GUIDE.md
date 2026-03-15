@@ -88,11 +88,17 @@ valgrind --leak-check=full ./ircserv 6667 test123
 
 **Terminal 2:**
 ```
+nc 127.0.0.1 6667
 PASS test123
 NICK alice
 USER alice 0 * :Alice Smith
 ```
-
+### our imlementation does not need to proceed <hostname> <servername>
+### howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
+```
+USER <username> <hostname> <servername> :<realname>
+USER  alice      0           *           :Alice Smith
+```
 - [ ] Server responds with 4 welcome messages (001, 002, 003, 004)
 - [ ] Connection stays open
 - [ ] Client can send further commands

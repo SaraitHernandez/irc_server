@@ -121,3 +121,14 @@ valgrind --leak-check=full --track-origins=yes ./test_leak
 ```
 All heap blocks were freed -- no leaks are possible
 ```
+ Signal handling**
+- **SIGPIPE** — ⚠️ **critical**. If you call `send()` on a closed socket without handling it, your server crashes. Subject says "must not crash in any circumstances" — so yes, at minimum `signal(SIGPIPE, SIG_IGN)`.
+- **SIGINT / SIGTERM** — good practice for graceful shutdown (free memory, close fds), valgrind-clean exit. Subject won't explicitly penalize you for missing it, but a crash/hang on Ctrl+C during eval looks bad.
+- **SIGQUIT** — debatable, same logic as SIGINT.
+
+> The subject doesn't list specific signals, but **"must not crash"** + **"no leaks"** implication makes SIGPIPE non-negotiable and the rest strongly recommended.
+
+---
+
+**3. SIGQUIT (Ctrl+\) from client side**
+✅ **You don't care.** SIGQUIT goes to the **client process**, not your server. Your server only sees the consequence: `recv() == 0` or `-1` with `ECONNRESET`. Handle it the same as any other disconnect — `disconnectClient(fd)`. Nothing special needed server-side.
