@@ -36,21 +36,21 @@ Server::Server(const Config& config)
 Server::~Server() {
     for (std::map<int, Client*>::iterator it = clients_.begin();
             it != clients_.end(); ++it) {
-        close(it->first);
-        delete it->second;
+        close(it->first);	//closing fd OS Level
+        delete it->second;	//deletes object Client frees memory
     }
     for (std::map<int, MessageBuffer*>::iterator it = buffers_.begin();
             it != buffers_.end(); ++it) {
         delete it->second;
-    }
+    }	//cleans buffer of messages DYNAMICALLY ALLOCATED WITH new
     for (std::map<std::string, Channel*>::iterator it = channels_.begin();
             it != channels_.end(); ++it) {
         delete it->second;
-    }
+    }	//cleans channels chat rooms 
     if (serverSocketFd_ >= 0) {
         close(serverSocketFd_);
-    }
-    delete poller_;
+    }				//DYNAMICALLY ALLOCATED poller_
+    delete poller_;	//monitors events on file descriptor closed here
 }
 
 
@@ -198,18 +198,11 @@ void Server::listenSocket() {
 	std::cout << "[Server] Listening backlog=10" << std::endl;
 }
 
-// DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK
+// DONE: setNonBlocking(int fd): fcntl() with O_NONBLOCK (evalsh: без F_GETFL)
 void	Server::setNonBlocking(int fd) {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags < 0)
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 	{
-		std::cerr << "[Server] fcntl(F_GETFL) failed for fd=" << fd 
-					<< ": " << strerror(errno) << std::endl;
-		return;
-	}
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-		std::cerr << "[Server] fcntl(F_SETFL) failed for fd=" << fd 
+		std::cerr << "[Server] fcntl(F_SETFL, O_NONBLOCK) failed for fd=" << fd
 					<< ": " << strerror(errno) << std::endl;
 	}
 }
