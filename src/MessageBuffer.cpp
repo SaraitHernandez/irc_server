@@ -25,23 +25,22 @@ void MessageBuffer::append(const std::string& data)
 }
 
 // Method - extractMessages()
-// - Find all complete messages (ending with \r\n)
+// - Find all complete messages (ending with \r\n or \n)
 // - Extract each complete message
 // - Remove extracted messages from buffer_
 // - Return vector of complete message strings
 // - Keep incomplete data in buffer_ for next append
+// RFC 2812 uses \r\n, but we tolerate bare \n for compatibility
 std::vector<std::string> MessageBuffer::extractMessages()
 {
     std::vector<std::string> messages;
     size_t pos;
 
-    while ((pos = findMessageEnd()) != std::string::npos)
+    while ((pos = buffer_.find('\n')) != std::string::npos)
     {
-        // Extract message with \r\n
-        std::string msg = buffer_.substr(0, pos + 2);
+        std::string msg = buffer_.substr(0, pos + 1);
+        buffer_.erase(0, pos + 1);
         messages.push_back(msg);
-        // Remove message with \r\n (pos points to \r, +2 covers \r\n)
-        buffer_.erase(0, pos + 2); 
     }
     return messages;
 }
@@ -70,8 +69,8 @@ size_t MessageBuffer::size() const
     return buffer_.size();
 }
 
-// Method - findMessageEnd(size_t startPos) - helper method to find next "\r\n" starting from startPos
+// Method - findMessageEnd(size_t startPos) - helper method to find next line ending
 size_t MessageBuffer::findMessageEnd(size_t startPos) const
 {
-    return buffer_.find("\r\n", startPos);
+    return buffer_.find('\n', startPos);
 }
