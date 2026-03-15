@@ -176,7 +176,10 @@ void handleMode(Server& server, Client& client, const Command& cmd) {
                 }
                 int limit = Utils::stringToInt(limitStr);
                 if (limit <= 0) {
-                    return;  // Invalid limit
+                    server.sendToClient(fd, Replies::numeric(
+                        Replies::ERR_UNKNOWNMODE, nick, "l",
+                        "Invalid limit value"));
+                    return;
                 }
                 channel->setUserLimit(limit);
                 channel->setMode('l', true);
@@ -198,8 +201,10 @@ void handleMode(Server& server, Client& client, const Command& cmd) {
     std::string modeMsg = ":" + client.getPrefix() + " MODE " + 
                          channel->getNameDisplay() + " " + modeStr;
     
-    // Add parameter for +k, +o, +l
-    if ((mode == 'k' || mode == 'o' || mode == 'l') && sign == '+') {
+    // Add parameter for +k, +o, +l, and -o (target nick)
+    if ((mode == 'k' || mode == 'l') && sign == '+') {
+        modeMsg += " " + getParam(cmd, 2);
+    } else if (mode == 'o') {
         modeMsg += " " + getParam(cmd, 2);
     }
     

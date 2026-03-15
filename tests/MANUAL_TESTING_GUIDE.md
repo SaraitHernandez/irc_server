@@ -1,680 +1,1179 @@
-# 🧪 Manual Testing Guide - IRC Server
+# Manual Testing Guide - ft_irc
 
-**Complete guide for manual testing of all IRC server features**
+Complete manual testing guide
+Run each test, verify the expected result, and check off the box.
 
 ---
 
-## 📋 Quick Setup
+## Setup
 
 ```bash
-# 1. Start server
-./ircserv 6667 test123
+# Terminal 1: Start server
+make re && ./ircserv 6667 test123
 
-# 2. In another terminal, connect
+# Terminal 2: Connect with nc
 nc localhost 6667
 
-# 3. Run tests
+# Terminal 3: Second client (when needed)
+nc localhost 6667
 ```
+
+> **Tip:** Every command you type in `nc` is sent with just `\n`.
+> The server handles both `\n` and `\r\n`, so manual testing with `nc` works fine.
 
 ---
 
-## ✅ Test Checklist
+## Section 1 — Basic Checks (eval sheet)
 
-Use this checklist to verify all features work correctly.
+> *"If any of these points is wrong, the evaluation ends now and the final mark is 0."*
 
-### 1. Authentication Tests
+### 1.1 Compilation
 
-#### Test 1.1: Successful Authentication ✅
 ```bash
+make re
+```
+
+- [ ] Project compiles with no errors
+- [ ] No compiler warnings (`-Wall -Wextra -Werror`)
+- [ ] Executable is named `ircserv`
+- [ ] Written in C++ (C++98)
+
+### 1.2 fcntl usage
+
+```bash
+grep -rn "fcntl" src/ include/
+```
+
+- [ ] Every `fcntl()` call uses exactly: `fcntl(fd, F_SETFL, O_NONBLOCK)`
+- [ ] No other flags or uses of `fcntl()`
+
+### 1.3 Single poll()
+
+```bash
+grep -rn "poll(" src/ include/ | grep -v "//"
+```
+
+- [ ] There is exactly **one** `poll()` call in the entire codebase
+- [ ] `poll()` is called before every `accept`, `recv`, `send`
+
+### 1.4 Server startup
+
+```bash
+./ircserv 6667 test123
+```
+
+- [ ] Server starts without error
+- [ ] Listens on the specified port
+- [ ] No crash, no segfault
+
+### 1.5 Memory leaks
+
+```bash
+# macOS:
+leaks --atExit -- ./ircserv 6667 test123
+# Then connect, run commands, disconnect, Ctrl+C the server
+
+# Linux:
+valgrind --leak-check=full ./ircserv 6667 test123
+```
+
+- [ ] 0 memory leaks reported
+- [ ] All heap allocations properly freed
+
+---
+
+## Section 2 — Networking (eval sheet)
+
+### 2.1 Basic connection with nc
+
+**Terminal 2:**
+```
 PASS test123
 NICK alice
 USER alice 0 * :Alice Smith
 ```
 
-**Expected:**
+- [ ] Server responds with 4 welcome messages (001, 002, 003, 004)
+- [ ] Connection stays open
+- [ ] Client can send further commands
+
+### 2.2 Connection with IRC client (reference client)
+
+> Our reference client is **Halloy** (also tested with **irssi**).
+
+Connect with your chosen IRC client to `localhost:6667` with password `test123`.
+
+- [ ] Client connects successfully
+- [ ] Registration completes (welcome messages)
+- [ ] Client can join channels and send messages
+
+### 2.3 Multiple simultaneous connections
+
+Open **3 terminals** with `nc localhost 6667` and register each:
+
+**Client 1:**
 ```
-:ft_irc 001 alice :Welcome to the IRC Network alice!alice@127.0.0.1
-:ft_irc 002 alice :Your host is ft_irc, running version 1.0
-:ft_irc 003 alice :This server was created today
-:ft_irc 004 alice ft_irc 1.0 o itkol
+PASS test123
+NICK alice
+USER alice 0 * :Alice
 ```
 
-**✓ Verify:**
-- [ ] All 4 welcome messages received (001-004)
-- [ ] Hostname shows real IP (not "unknown")
-- [ ] Client can proceed to use other commands
+**Client 2:**
+```
+PASS test123
+NICK bob
+USER bob 0 * :Bob
+```
+
+**Client 3:**
+```
+PASS test123
+NICK charlie
+USER charlie 0 * :Charlie
+```
+
+- [ ] All 3 clients connect and register simultaneously
+- [ ] Server does not block or slow down
+- [ ] Each client gets independent responses
+
+### 2.4 Channel messaging reaches all members
+
+All 3 clients join the same channel:
+```
+JOIN #test
+```
+
+Client 1 sends:
+```
+PRIVMSG #test :Hello everyone!
+```
+
+- [ ] Client 2 receives the message
+- [ ] Client 3 receives the message
+- [ ] Client 1 does NOT receive their own message back
+
+### 2.5 nc and IRC client at the same time
+
+Connect one `nc` client and one IRC client (irssi/Halloy) to the same server.
+Both join `#mixed`. Send messages from both.
+
+- [ ] Messages from `nc` appear in the IRC client
+- [ ] Messages from the IRC client appear in `nc`
+- [ ] Server handles both without issues
 
 ---
 
-#### Test 1.2: Wrong Password ❌
+## Section 3 — Networking Specials (eval sheet)
+
+> *"Network communications can be disturbed by many strange situations."*
+
+### 3.1 Frozen client (Ctrl+Z) and flood
+
+1. Connect **Client A** and **Client B**, both join `#flood`
+2. **Freeze Client A** with `Ctrl+Z` in its terminal
+3. From Client B, send 20+ messages rapidly:
+   ```
+   PRIVMSG #flood :msg1
+   PRIVMSG #flood :msg2
+   ...
+   PRIVMSG #flood :msg20
+   ```
+4. **Unfreeze Client A** with `fg`
+
+- [ ] Server does NOT hang while Client A is frozen
+- [ ] Client B can still send messages normally
+- [ ] When Client A unfreezes, it receives all buffered messages
+- [ ] No memory leaks during this operation
+- [ ] Server remains responsive throughout
+
+### 3.2 Kill nc with partial command
+
+1. Connect with `nc localhost 6667`
+2. Register normally
+3. Type a partial command (do NOT press Enter):
+   ```
+   PRIVMSG #te
+   ```
+4. Kill `nc` with `Ctrl+C`
+
+- [ ] Server does NOT crash
+- [ ] Server does NOT block
+- [ ] Other connected clients are unaffected
+- [ ] New clients can still connect
+
+### 3.3 Unexpectedly kill a client
+
+1. Connect Client A and Client B to `#kill`
+2. Kill Client A's terminal window (close it, or `kill -9` the nc process)
+
+- [ ] Server continues running normally
+- [ ] Client B is unaffected and can still send messages
+- [ ] New clients can connect after the kill
+- [ ] Client A is properly removed from channels
+
+### 3.4 Partial commands via nc
+
+Send data byte-by-byte or in chunks:
+
 ```bash
+# Method 1: Using printf with separate sends
+(printf "PASS "; sleep 0.5; printf "test1"; sleep 0.5; printf "23\n"; sleep 0.5; printf "NICK al"; sleep 0.5; printf "ice\n"; sleep 0.5; printf "USER alice 0 * :Alice\n"; sleep 1) | nc localhost 6667
+```
+
+- [ ] Server correctly reassembles partial data
+- [ ] Welcome messages are received after full registration
+- [ ] Other connections are not affected while waiting for partial data
+
+---
+
+## Section 4 — Authentication
+
+### 4.1 Successful registration (PASS → NICK → USER)
+
+```
+PASS test123
+NICK alice
+USER alice 0 * :Alice Smith
+```
+
+- [ ] Receives `001` RPL_WELCOME
+- [ ] Receives `002` RPL_YOURHOST
+- [ ] Receives `003` RPL_CREATED
+- [ ] Receives `004` RPL_MYINFO
+- [ ] Prefix includes real IP: `alice!alice@127.0.0.1`
+
+### 4.2 Wrong password
+
+```
 PASS wrongpassword
 ```
 
-**Expected:**
+- [ ] Receives `464 :Password incorrect`
+- [ ] Can retry with correct password
+
+### 4.3 Password retry limit (3 attempts)
+
 ```
-:ft_irc 464 * :Password incorrect
-```
-
-**✓ Verify:**
-- [ ] Error message received
-- [ ] Can retry (3 attempts allowed)
-
----
-
-#### Test 1.3: Password Retry Limit (Halloy) ✅
-```bash
 PASS wrong1
 PASS wrong2
 PASS wrong3
 ```
 
-**Expected:**
-```
-:ft_irc 464 * :Password incorrect
-:ft_irc 464 * :Password incorrect
-:ft_irc 464 * :Password incorrect (max attempts exceeded)
-(Connection closed)
-```
-
-**✓ Verify:**
-- [ ] 3 attempts allowed
+- [ ] Receives `464` error for each attempt
 - [ ] Disconnected after 3rd failed attempt
 
----
+### 4.4 NICK before PASS (wrong order)
 
-#### Test 1.4: Wrong Order (NICK before PASS) ❌
-```bash
+```
 NICK alice
 ```
 
-**Expected:**
+- [ ] Receives `451 :You have not registered`
+
+### 4.5 USER before NICK (wrong order)
+
 ```
-:ft_irc 451 * :You have not registered
+PASS test123
+USER alice 0 * :Alice
 ```
 
-**✓ Verify:**
-- [ ] Error ERR_NOTREGISTERED (451)
-- [ ] Cannot proceed without PASS first
+- [ ] Receives `451 :You have not registered`
 
----
+### 4.6 Commands before registration
 
-#### Test 1.5: Missing Nickname ❌
-```bash
+```
+JOIN #test
+PRIVMSG #test :hello
+```
+
+- [ ] Receives `451 :You have not registered` for each command
+
+### 4.7 Empty NICK
+
+```
 PASS test123
 NICK
 ```
 
-**Expected:**
+- [ ] Receives `431 :No nickname given`
+
+### 4.8 Duplicate nickname
+
+**Client 1** registers as `alice`. **Client 2** tries:
+
 ```
-:ft_irc 431 * :No nickname given
+PASS test123
+NICK alice
 ```
 
-**✓ Verify:**
-- [ ] Error ERR_NONICKNAMEGIVEN (431)
+- [ ] Client 2 receives `433 :Nickname is already in use`
+
+### 4.9 Case-insensitive duplicate nickname
+
+**Client 1** registers as `Alice`. **Client 2** tries:
+
+```
+PASS test123
+NICK ALICE
+```
+
+- [ ] Client 2 receives `433 :Nickname is already in use`
+- [ ] Case-insensitive comparison works
+
+### 4.10 Nickname change after registration
+
+```
+PASS test123
+NICK oldnick
+USER old 0 * :Old
+NICK newnick
+```
+
+- [ ] Receives `:oldnick!old@127.0.0.1 NICK :newnick`
+- [ ] New nickname is active for subsequent commands
+
+### 4.11 Change NICK to one already in use
+
+**Client 1** is `alice`. **Client 2** is `bob`. Client 2 tries:
+
+```
+NICK alice
+```
+
+- [ ] Receives `433 :Nickname is already in use`
+- [ ] Client 2 keeps `bob` as nickname
+
+### 4.12 Invalid nickname characters
+
+```
+PASS test123
+NICK #invalid
+```
+
+- [ ] Receives `432 :Erroneous nickname`
+
+### 4.13 Double registration (USER twice)
+
+```
+PASS test123
+NICK alice
+USER alice 0 * :Alice
+USER alice2 0 * :Alice2
+```
+
+- [ ] Second USER receives `462 :You may not reregister`
+
+### 4.14 PASS after registration
+
+```
+PASS test123
+NICK alice
+USER alice 0 * :Alice
+PASS test123
+```
+
+- [ ] Receives `462 :You may not reregister`
 
 ---
 
-### 2. Channel Tests
+## Section 5 — Channel Operations
 
-#### Test 2.1: Create and Join Channel ✅
-```bash
-PASS test123
-NICK bob
-USER bob 0 * :Bob Jones
+### 5.1 JOIN a new channel
+
+```
+JOIN #newchannel
+```
+
+- [ ] Receives `:nick!user@host JOIN :#newchannel`
+- [ ] Receives topic (331 No topic) or (332 Topic)
+- [ ] Receives NAMES list (353) with `@nick` (operator prefix)
+- [ ] Receives end of NAMES (366)
+- [ ] Creator is operator (has `@` in NAMES list)
+
+### 5.2 JOIN an existing channel
+
+**Client 2** joins a channel that Client 1 already created:
+
+```
+JOIN #newchannel
+```
+
+- [ ] Client 2 receives JOIN confirmation
+- [ ] Client 2 receives NAMES list showing both users
+- [ ] Client 1 receives notification that Client 2 joined
+- [ ] Client 2 does NOT have `@` (not operator)
+
+### 5.3 JOIN a channel without # prefix
+
+```
+JOIN invalidname
+```
+
+- [ ] Receives `476 :Bad Channel Mask`
+
+### 5.4 Double JOIN (same channel)
+
+```
+JOIN #test
 JOIN #test
 ```
 
-**Expected:**
+- [ ] Second JOIN is silently ignored (no error, no duplicate)
+
+### 5.5 PART a channel
+
 ```
-:bob!bob@127.0.0.1 JOIN :#test
-:ft_irc 331 bob #test :No topic is set
-:ft_irc 353 bob = #test :@bob
-:ft_irc 366 bob #test :End of /NAMES list
+JOIN #test
+PART #test
 ```
 
-**✓ Verify:**
-- [ ] JOIN notification received
-- [ ] User is operator (@ symbol)
-- [ ] NAMES list shows user
-- [ ] Topic message (no topic set)
+- [ ] Receives `:nick!user@host PART #test :Leaving`
+- [ ] Other members receive the PART notification
+- [ ] Client is removed from the channel
+
+### 5.6 PART a channel you're not in
+
+```
+PART #nonexistent
+```
+
+- [ ] Receives `403 :No such channel`
+
+### 5.7 PART with a reason
+
+```
+JOIN #test
+PART #test :Going away
+```
+
+- [ ] Reason is included in the PART message
+
+### 5.8 PART then rejoin
+
+```
+JOIN #test
+PART #test
+JOIN #test
+```
+
+- [ ] Rejoin works normally
+- [ ] User gets operator again (if channel was empty)
 
 ---
 
-#### Test 2.2: Set and View Topic ✅
-```bash
-TOPIC #test :This is a test channel
-TOPIC #test
+## Section 6 — Messaging (PRIVMSG)
+
+### 6.1 Channel message
+
+Both clients in `#test`. Client 1 sends:
+
 ```
-
-**Expected:**
-```
-:bob!bob@127.0.0.1 TOPIC #test :This is a test channel
-:ft_irc 332 bob #test :This is a test channel
-```
-
-**✓ Verify:**
-- [ ] Topic set successfully
-- [ ] Topic query returns correct topic
-
----
-
-#### Test 2.3: Leave Channel (PART) ✅
-```bash
-PART #test :Goodbye everyone
-```
-
-**Expected:**
-```
-:bob!bob@127.0.0.1 PART #test :Goodbye everyone
-```
-
-**✓ Verify:**
-- [ ] PART notification with message
-- [ ] No longer in channel
-
----
-
-### 3. Messaging Tests
-
-#### Test 3.1: Channel Message ✅
-```bash
-# After joining #test
 PRIVMSG #test :Hello everyone!
 ```
 
-**Expected:**
-- Message broadcast to all channel members (except sender)
+- [ ] Client 2 receives: `:nick!user@host PRIVMSG #test :Hello everyone!`
+- [ ] Client 1 does NOT receive their own message
 
-**✓ Verify:**
-- [ ] Message sent without error
-- [ ] Other clients in channel receive message
+### 6.2 Private message to a user
+
+```
+PRIVMSG bob :Hey Bob, private message!
+```
+
+- [ ] Bob receives: `:alice!alice@host PRIVMSG bob :Hey Bob, private message!`
+- [ ] Only Bob receives it (no one else)
+
+### 6.3 Message to non-existent user
+
+```
+PRIVMSG ghostuser :hello?
+```
+
+- [ ] Receives `401 ghostuser :No such nick/channel`
+
+### 6.4 Message to non-existent channel
+
+```
+PRIVMSG #ghostchan :hello?
+```
+
+- [ ] Receives `403 #ghostchan :No such channel`
+
+### 6.5 Message to channel you're not in
+
+Client is NOT in `#private`:
+
+```
+PRIVMSG #private :I'm not in here
+```
+
+- [ ] Receives `404 #private :Cannot send to channel`
+
+### 6.6 PRIVMSG with no target
+
+```
+PRIVMSG
+```
+
+- [ ] Receives `461 :Not enough parameters`
+
+### 6.7 PRIVMSG with empty message
+
+```
+PRIVMSG bob :
+```
+
+- [ ] Receives `412 :No text to send`
+
+### 6.8 PRIVMSG to yourself
+
+```
+PRIVMSG alice :talking to myself
+```
+
+- [ ] Message is delivered to yourself (this is valid IRC behavior)
 
 ---
 
-#### Test 3.2: Private Message ✅
-```bash
-# With another user "alice" connected
-PRIVMSG alice :Hello Alice!
+## Section 7 — Channel Operator Commands (eval sheet)
+
+> *"Check that a regular user does not have privileges to do channel operator actions.
+> Then test with an operator."*
+
+### Setup for operator tests
+
+**Client 1 (operator):**
+```
+PASS test123
+NICK op_user
+USER op_user 0 * :Operator
+JOIN #moderated
 ```
 
-**Expected:**
-- Message sent to alice only
+**Client 2 (regular):**
+```
+PASS test123
+NICK reg_user
+USER reg_user 0 * :Regular
+JOIN #moderated
+```
 
-**✓ Verify:**
-- [ ] No error if alice exists
-- [ ] Alice receives: `:sender!user@host PRIVMSG alice :Hello Alice!`
+Client 1 is `@op_user` (operator). Client 2 is `reg_user` (regular).
+
+### 7.1 Regular user cannot KICK
+
+**Client 2 (regular):**
+```
+KICK #moderated op_user :haha
+```
+
+- [ ] Receives `482 :You're not channel operator`
+
+### 7.2 Operator can KICK
+
+**Client 1 (operator):**
+```
+KICK #moderated reg_user :Bye!
+```
+
+- [ ] Both clients receive: `:op_user!... KICK #moderated reg_user :Bye!`
+- [ ] reg_user is removed from the channel
+
+### 7.3 KICK user not in channel
+
+**Client 1:**
+```
+KICK #moderated nobody :Bye
+```
+
+- [ ] Receives `401 nobody :No such nick/channel`
+
+### 7.4 Regular user cannot set TOPIC (with +t)
+
+**Client 1 sets +t:**
+```
+MODE #moderated +t
+```
+
+**Client 2 (re-joins and) tries:**
+```
+JOIN #moderated
+TOPIC #moderated :New topic
+```
+
+- [ ] Receives `482 :You're not channel operator`
+
+### 7.5 Operator can set TOPIC
+
+**Client 1:**
+```
+TOPIC #moderated :Welcome to the moderated channel
+```
+
+- [ ] All members receive: `:op_user!... TOPIC #moderated :Welcome to the moderated channel`
+
+### 7.6 Query TOPIC
+
+```
+TOPIC #moderated
+```
+
+- [ ] Receives `332 nick #moderated :Welcome to the moderated channel`
+
+### 7.7 TOPIC without +t (anyone can set)
+
+Create a NEW channel (no +t by default):
+```
+JOIN #open
+TOPIC #open :Anyone can set this
+```
+
+**Client 2 also joins and tries:**
+```
+JOIN #open
+TOPIC #open :I changed it!
+```
+
+- [ ] Both users can set topic (no +t means anyone can)
+
+### 7.8 Regular user cannot set MODE
+
+**Client 2:**
+```
+MODE #moderated +i
+```
+
+- [ ] Receives `482 :You're not channel operator`
+
+### 7.9 Regular user cannot INVITE
+
+**Client 1 sets +i:**
+```
+MODE #moderated +i
+```
+
+**Client 2 (if in channel) tries to invite someone:**
+```
+INVITE someone #moderated
+```
+
+- [ ] Receives `482 :You're not channel operator` (or `401` if user doesn't exist)
+
+### 7.10 Operator can INVITE
+
+**Client 1:**
+```
+INVITE reg_user #moderated
+```
+
+- [ ] op_user receives `341` (RPL_INVITING)
+- [ ] reg_user receives `:op_user!... INVITE reg_user #moderated`
+- [ ] reg_user can now `JOIN #moderated` even though it's +i
 
 ---
 
-#### Test 3.3: Message to Non-Existent User ❌
-```bash
-PRIVMSG nobody :Hello
+## Section 8 — Channel Modes
+
+### 8.1 MODE +i (invite-only)
+
+**Client 1 (operator in #secret):**
+```
+JOIN #secret
+MODE #secret +i
 ```
 
-**Expected:**
+**Client 2 tries to join:**
 ```
-:ft_irc 401 bob nobody :No such nick/channel
-```
-
-**✓ Verify:**
-- [ ] Error ERR_NOSUCHNICK (401)
-
----
-
-### 4. Channel Mode Tests
-
-#### Test 4.1: Invite-Only Mode (+i) ✅
-```bash
-# As operator in #test
-MODE #test +i
-MODE #test
+JOIN #secret
 ```
 
-**Expected:**
+- [ ] Receives `473 :Cannot join channel (+i)`
+
+**Client 1 invites Client 2:**
 ```
-:bob!bob@127.0.0.1 MODE #test +i
-:ft_irc 324 bob #test +i
+INVITE reg_user #secret
 ```
 
-**✓ Verify:**
-- [ ] Mode set notification
-- [ ] Mode query shows +i
+**Client 2 tries again:**
+```
+JOIN #secret
+```
 
----
+- [ ] Client 2 joins successfully after invite
 
-#### Test 4.2: Topic Protected Mode (+t) ✅
-```bash
+### 8.2 MODE -i (remove invite-only)
+
+**Client 1:**
+```
+MODE #secret -i
+```
+
+**Client 3 can now join:**
+```
+JOIN #secret
+```
+
+- [ ] Joins successfully without invite
+
+### 8.3 MODE +t (topic protection)
+
+```
 MODE #test +t
 ```
 
-**Expected:**
+- [ ] Only operators can change the topic
+- [ ] Regular users receive `482` when trying to set topic
+
+### 8.4 MODE -t (remove topic protection)
+
 ```
-:bob!bob@127.0.0.1 MODE #test +t
+MODE #test -t
 ```
 
-**✓ Verify:**
-- [ ] Only operators can change topic now
+- [ ] Any member can now change the topic
 
----
+### 8.5 MODE +k (channel password)
 
-#### Test 4.3: Channel Key (+k) ✅
-```bash
-MODE #test +k secretpassword
+**Client 1:**
+```
+MODE #locked +k secretkey
+```
+
+**Client 2 tries without key:**
+```
+JOIN #locked
+```
+
+- [ ] Receives `475 :Cannot join channel (+k)`
+
+**Client 2 with wrong key:**
+```
+JOIN #locked wrongkey
+```
+
+- [ ] Receives `475 :Cannot join channel (+k)`
+
+**Client 2 with correct key:**
+```
+JOIN #locked secretkey
+```
+
+- [ ] Joins successfully
+
+### 8.6 MODE -k (remove channel password)
+
+**Client 1:**
+```
+MODE #locked -k
+```
+
+**Client 3 can now join without key:**
+```
+JOIN #locked
+```
+
+- [ ] Joins successfully without key
+
+### 8.7 MODE +o (give operator)
+
+**Client 1 (operator):**
+```
+MODE #test +o reg_user
+```
+
+- [ ] reg_user is now operator
+- [ ] reg_user has `@` in NAMES list
+- [ ] MODE change is broadcast to all channel members
+
+### 8.8 MODE -o (remove operator)
+
+**Client 1:**
+```
+MODE #test -o reg_user
+```
+
+- [ ] reg_user is no longer operator
+- [ ] MODE change broadcast includes target nick: `MODE #test -o reg_user`
+- [ ] reg_user can no longer use operator commands
+
+### 8.9 MODE -o on yourself
+
+```
+MODE #test -o op_user
+```
+
+- [ ] You lose operator status
+- [ ] Subsequent operator commands return `482`
+
+### 8.10 MODE +l (user limit)
+
+**Client 1:**
+```
+MODE #limited +l 2
+```
+
+Client 1 and Client 2 are in the channel (2 users). Client 3 tries:
+```
+JOIN #limited
+```
+
+- [ ] Receives `471 :Cannot join channel (+l)`
+
+### 8.11 MODE -l (remove limit)
+
+**Client 1:**
+```
+MODE #limited -l
+```
+
+**Client 3 can now join:**
+```
+JOIN #limited
+```
+
+- [ ] Joins successfully
+
+### 8.12 MODE +l with invalid values
+
+```
+MODE #test +l 0
+MODE #test +l -5
+MODE #test +l abc
+```
+
+- [ ] Server returns an error for each (does NOT silently accept)
+
+### 8.13 MODE +k without key parameter
+
+```
+MODE #test +k
+```
+
+- [ ] Receives `461 :Not enough parameters`
+
+### 8.14 MODE +o on non-existent user
+
+```
+MODE #test +o ghostuser
+```
+
+- [ ] Receives `401 ghostuser :No such nick/channel`
+
+### 8.15 Query channel modes
+
+```
 MODE #test
 ```
 
-**Expected:**
-```
-:bob!bob@127.0.0.1 MODE #test +k secretpassword
-:ft_irc 324 bob #test +itk
-```
-
-**✓ Verify:**
-- [ ] Key set
-- [ ] Mode query shows +k
-- [ ] JOIN requires key
+- [ ] Receives `324` with current mode string (e.g. `+it`, `+k`, `+l 5`)
 
 ---
 
-#### Test 4.4: User Limit (+l) ✅
-```bash
-MODE #test +l 5
-MODE #test
+## Section 9 — QUIT and Disconnect
+
+### 9.1 Clean QUIT
+
+```
+JOIN #test
+QUIT :Goodbye!
 ```
 
-**Expected:**
+- [ ] Connection is closed
+- [ ] Other clients in `#test` receive quit notification
+- [ ] Client is removed from all channels
+
+### 9.2 QUIT without message
+
 ```
-:bob!bob@127.0.0.1 MODE #test +l 5
-:ft_irc 324 bob #test +itkl
+QUIT
 ```
 
-**✓ Verify:**
-- [ ] Limit set
-- [ ] Cannot join when channel full (5 users)
+- [ ] Connection is closed cleanly
+
+### 9.3 Disconnect without QUIT (close nc)
+
+Register and join a channel, then close `nc` with `Ctrl+C`.
+
+- [ ] Server detects the disconnect
+- [ ] Client is removed from all channels
+- [ ] Channel is destroyed if it was the last member
+- [ ] No memory leaks from the disconnected client
+
+### 9.4 Commands after QUIT
+
+```
+QUIT
+JOIN #afterquit
+```
+
+- [ ] Server ignores commands after QUIT (connection should be closed)
 
 ---
 
-#### Test 4.5: Operator Mode (+o) ✅
-```bash
-# With alice in channel
-MODE #test +o alice
+## Section 10 — PING/PONG
+
+### 10.1 Server PING
+
 ```
-
-**Expected:**
-```
-:bob!bob@127.0.0.1 MODE #test +o alice
-```
-
-**✓ Verify:**
-- [ ] Alice becomes operator (@alice in NAMES)
-
----
-
-### 5. Operator Command Tests
-
-#### Test 5.1: INVITE ✅
-```bash
-# Channel is +i (invite-only)
-INVITE charlie #test
-```
-
-**Expected:**
-```
-:ft_irc 341 bob charlie #test
-:bob!bob@127.0.0.1 INVITE charlie :#test
-```
-
-**✓ Verify:**
-- [ ] RPL_INVITING (341) received
-- [ ] Charlie receives INVITE notification
-- [ ] Charlie can now join +i channel
-
----
-
-#### Test 5.2: KICK ✅
-```bash
-# With alice in #test
-KICK #test alice :Violating rules
-```
-
-**Expected:**
-```
-:bob!bob@127.0.0.1 KICK #test alice :Violating rules
-```
-
-**✓ Verify:**
-- [ ] Alice removed from channel
-- [ ] All members see KICK notification
-- [ ] Reason included
-
----
-
-#### Test 5.3: Non-Operator KICK Attempt ❌
-```bash
-# As non-operator user
-KICK #test bob :Trying to kick
-```
-
-**Expected:**
-```
-:ft_irc 482 alice #test :You're not channel operator
-```
-
-**✓ Verify:**
-- [ ] Error ERR_CHANOPRIVSNEEDED (482)
-- [ ] KICK denied
-
----
-
-### 6. Connection Tests
-
-#### Test 6.1: PING/PONG ✅
-```bash
 PING :test123
 ```
 
-**Expected:**
+- [ ] Receives `PONG :test123`
+- [ ] Token is echoed back correctly
+
+### 10.2 Client PONG
+
+If the server sends a PING, respond:
+
 ```
-:ft_irc PONG ft_irc :test123
+PONG :server_token
 ```
 
-**✓ Verify:**
-- [ ] PONG response with same token
+- [ ] Server accepts the PONG
+- [ ] Connection stays alive
 
 ---
 
-#### Test 6.2: QUIT ✅
-```bash
-QUIT :Goodbye everyone
+## Section 11 — Edge Cases and Robustness
+
+### 11.1 Empty lines
+
+Send several empty lines (just press Enter multiple times):
+
+```
+(empty)
+(empty)
+(empty)
+PASS test123
+NICK edgetest
+USER edgetest 0 * :Edge
 ```
 
-**Expected:**
-- All channels broadcast: `:bob!bob@127.0.0.1 QUIT :Goodbye everyone`
-- Connection closes
+- [ ] Server ignores empty lines
+- [ ] Registration still works after empty lines
 
-**✓ Verify:**
-- [ ] QUIT message sent to all channels
-- [ ] Client disconnected
-- [ ] Channels cleaned up (if empty)
+### 11.2 Very long nickname (1000+ characters)
+
+```
+PASS test123
+NICK AAAA....(1000 A's)....AAAA
+```
+
+- [ ] Server does NOT crash
+- [ ] Server handles gracefully (accepts or rejects, but no segfault)
+
+### 11.3 Very long message (50000+ characters)
+
+```
+PRIVMSG #test :XXXX....(50000 X's)....XXXX
+```
+
+- [ ] Server does NOT crash
+- [ ] No segfault, no hang
+
+### 11.4 Very long channel name
+
+```
+JOIN #ZZZZ....(10000 Z's)....ZZZZ
+```
+
+- [ ] Server does NOT crash
+
+### 11.5 Binary/garbage data
+
+Send random bytes to the server:
+
+```bash
+(printf "\xff\xfe\xfd\x00\x01"; sleep 1) | nc localhost 6667
+```
+
+- [ ] Server does NOT crash
+- [ ] Other clients are unaffected
+
+### 11.6 Null bytes in messages
+
+```
+PRIVMSG #test :\x00\x00\x00
+```
+
+- [ ] Server does NOT crash
+
+### 11.7 Rapid connect/disconnect (50 clients)
+
+```bash
+for i in $(seq 1 50); do
+  (printf "PASS test123\nNICK f$i\nUSER f 0 * :x\nQUIT\n") | nc localhost 6667 &
+done
+wait
+```
+
+- [ ] Server survives all 50 rapid connections
+- [ ] Server is still responsive after the flood
+
+### 11.8 Connect and immediately close (no data sent)
+
+```bash
+nc -w 0 localhost 6667 < /dev/null
+```
+
+- [ ] Server does NOT crash
+- [ ] Server does NOT block
 
 ---
 
-### 7. Multi-Client Tests
+## Section 12 — Error Handling
 
-#### Test 7.1: Two Clients Same Channel ✅
+### 12.1 Unknown command
 
-**Terminal 1:**
-```bash
-nc localhost 6667
+```
 PASS test123
 NICK alice
 USER alice 0 * :Alice
-JOIN #party
+BLAHBLAH something
 ```
 
-**Terminal 2:**
-```bash
-nc localhost 6667
-PASS test123
-NICK bob
-USER bob 0 * :Bob
-JOIN #party
+- [ ] Receives `421 :Unknown command`
+
+### 12.2 Commands with no parameters
+
+After registration, try each:
+
 ```
-
-**✓ Verify:**
-- [ ] Alice sees bob JOIN notification
-- [ ] Bob sees alice in NAMES list (@alice bob)
-- [ ] Both can send messages
-- [ ] Both receive each other's messages
-
----
-
-#### Test 7.2: Three Clients Same Channel ✅
-
-Add **Terminal 3:**
-```bash
-nc localhost 6667
-PASS test123
-NICK charlie
-USER charlie 0 * :Charlie
-JOIN #party
-```
-
-**✓ Verify:**
-- [ ] All clients see charlie JOIN
-- [ ] Charlie sees: @alice bob charlie in NAMES
-- [ ] Only alice is operator (@)
-
----
-
-### 8. Case-Insensitive Tests (Halloy)
-
-#### Test 8.1: Nickname Case ✅
-```bash
-PASS test123
-NICK BOB
-USER bob 0 * :Bob
-NICK bob
-```
-
-**Expected:**
-```
-:BOB!bob@127.0.0.1 NICK :bob
-```
-
-**✓ Verify:**
-- [ ] Same client can change case
-- [ ] Original case preserved in prefix
-
----
-
-#### Test 8.2: Duplicate Nickname Different Case ❌
-
-**Terminal 1:** `NICK Alice`  
-**Terminal 2:** `NICK alice`
-
-**Expected Terminal 2:**
-```
-:ft_irc 433 * alice :Nickname is already in use
-```
-
-**✓ Verify:**
-- [ ] Second client gets ERR_NICKNAMEINUSE
-- [ ] Nicknames are case-insensitive
-
----
-
-### 9. Edge Case Tests
-
-#### Test 9.1: Empty Parameters ❌
-```bash
-PASS test123
-NICK
-USER
 JOIN
+PART
+PRIVMSG
+KICK
+INVITE
+TOPIC
+MODE
 ```
 
-**Expected:**
-- ERR_NONICKNAMEGIVEN for NICK
-- ERR_NEEDMOREPARAMS for USER
-- ERR_NEEDMOREPARAMS for JOIN
+- [ ] Each returns `461 :Not enough parameters`
 
-**✓ Verify:**
-- [ ] Proper error codes for each
+### 12.3 KICK yourself
 
----
-
-#### Test 9.2: Unknown Command ❌
-```bash
-PASS test123
-NICK alice
-USER alice 0 * :Alice
-UNKNOWNCOMMAND param1 param2
 ```
-
-**Expected:**
-```
-:ft_irc 421 alice UNKNOWNCOMMAND :Unknown command
-```
-
-**✓ Verify:**
-- [ ] ERR_UNKNOWNCOMMAND (421)
-
----
-
-#### Test 9.3: Partial Data (Ctrl+D Test) ✅
-```bash
-nc localhost 6667
-PASS te(Ctrl+D)st123(Ctrl+D)
-NICK al(Ctrl+D)ice
-```
-
-**✓ Verify:**
-- [ ] MessageBuffer reconstructs: "PASS test123" and "NICK alice"
-- [ ] Commands execute correctly
-
----
-
-### 10. Cleanup Tests
-
-#### Test 10.1: Disconnect Cleanup ✅
-```bash
-# Connect, join #test, then close connection (Ctrl+C)
-```
-
-**✓ Verify (in server logs):**
-- [ ] `[Server] Disconnecting fd=X`
-- [ ] `[Server] Removing empty channel: #test`
-- [ ] No memory leaks
-
----
-
-#### Test 10.2: Multiple Disconnect ✅
-```bash
-# Connect 3 clients to #test
-# Disconnect all 3
-```
-
-**✓ Verify:**
-- [ ] Channel deleted after last user leaves
-- [ ] Server still running
-- [ ] New clients can connect
-
----
-
-## 📊 Test Coverage Summary
-
-| Category | Tests | Status |
-|----------|-------|--------|
-| Authentication | 5 | ✅ |
-| Channels | 3 | ✅ |
-| Messaging | 3 | ✅ |
-| Modes | 5 | ✅ |
-| Operators | 3 | ✅ |
-| Connection | 2 | ✅ |
-| Multi-Client | 2 | ✅ |
-| Case-Insensitive | 2 | ✅ |
-| Edge Cases | 3 | ✅ |
-| Cleanup | 2 | ✅ |
-| **TOTAL** | **30** | **✅** |
-
----
-
-## 🔧 Testing Tools
-
-### Using netcat (nc)
-```bash
-nc localhost 6667
-# Type commands manually
-```
-
-### Using irssi
-```bash
-irssi -c localhost -p 6667
-/server test123
-/join #test
-/msg #test Hello
-```
-
-### Using telnet
-```bash
-telnet localhost 6667
-PASS test123
-NICK testuser
-USER test 0 * :Test
-```
-
----
-
-## 📝 Test Notes
-
-### Halloy Specific Tests
-- ✅ Strict order PASS → NICK → USER
-- ✅ Password retry (3 attempts)
-- ✅ Case-insensitive nicknames
-- ✅ Case-preserving display
-
-### Performance Tests
-- Can handle 3+ simultaneous clients
-- Messages delivered < 300ms
-- No blocking observed
-
-### Memory Tests
-```bash
-# macOS
-leaks -atExit -- ./ircserv 6667 test123
-
-# Linux
-valgrind --leak-check=full ./ircserv 6667 test123
-```
-
----
-
-## 🐛 Common Issues During Testing
-
-### Issue: "Connection refused"
-**Solution:** Server not running. Start with `./ircserv 6667 test123`
-
-### Issue: "Port already in use"
-**Solution:** Kill existing server: `killall ircserv`
-
-### Issue: Commands don't work
-**Solution:** Check you completed authentication (PASS, NICK, USER)
-
-### Issue: Can't see other clients
-**Solution:** Both clients must stay connected (don't disconnect immediately)
-
----
-
-## ✅ Quick Smoke Test (2 minutes)
-
-Run these commands to verify basic functionality:
-
-```bash
-# Start server
-./ircserv 6667 test123
-
-# In another terminal
-nc localhost 6667
-PASS test123
-NICK tester
-USER test 0 * :Test User
 JOIN #test
-MODE #test +i
-TOPIC #test :Testing
-PRIVMSG #test :Hello!
-QUIT :Done
+KICK #test alice :self-kick
 ```
 
-**If all works:** ✅ Server is functional!
+- [ ] Server handles gracefully (allowed in most IRC implementations)
+
+### 12.4 INVITE to a channel you're not in
+
+```
+INVITE someone #randomchan
+```
+
+- [ ] Receives appropriate error (403 or 442)
+
+### 12.5 MODE on a channel you're not in
+
+First create a channel from another client, then:
+
+```
+MODE #otherchannel +i
+```
+
+- [ ] Receives `442 :You're not on that channel`
 
 ---
 
-**Test Document Version:** 1.0  
-**Last Updated:** March 12, 2026  
-**Status:** Complete
+## Section 13 — Case Insensitivity (Halloy compatibility)
+
+### 13.1 Nicknames are case-insensitive
+
+**Client 1** registers as `Alice`. **Client 2** tries `ALICE`:
+
+- [ ] `433 :Nickname is already in use`
+
+### 13.2 Channel names are case-insensitive
+
+**Client 1** joins `#General`. **Client 2** joins `#GENERAL`:
+
+- [ ] Both are in the same channel
+- [ ] Client 1 sees Client 2 join
+
+### 13.3 Case is preserved for display
+
+After joining with `#MyChannel`, check NAMES list:
+
+- [ ] Channel name displays as originally created (e.g. `#MyChannel`)
+- [ ] Nickname displays as originally set (e.g. `Alice` not `alice`)
 
 ---
 
-**END OF MANUAL TESTING GUIDE**
+## Quick Checklist Summary
+
+### Must Pass (evaluation stops at first failure)
+
+| # | Check | Status |
+|---|-------|--------|
+| 1 | Compiles with `-Wall -Wextra -Werror` | [ ] |
+| 2 | Executable named `ircserv` | [ ] |
+| 3 | `fcntl()` only used as `fcntl(fd, F_SETFL, O_NONBLOCK)` | [ ] |
+| 4 | Single `poll()` in the code | [ ] |
+| 5 | No segfault at any point | [ ] |
+| 6 | No memory leaks | [ ] |
+
+### Networking
+
+| # | Check | Status |
+|---|-------|--------|
+| 7 | Connect with `nc` | [ ] |
+| 8 | Connect with reference IRC client | [ ] |
+| 9 | Multiple simultaneous connections | [ ] |
+| 10 | Channel messages reach all members | [ ] |
+| 11 | `nc` and IRC client work together | [ ] |
+| 12 | Frozen client (Ctrl+Z) does not hang server | [ ] |
+| 13 | Kill nc mid-command — server survives | [ ] |
+| 14 | Unexpectedly kill client — server continues | [ ] |
+| 15 | Partial commands handled correctly | [ ] |
+
+### Commands
+
+| # | Check | Status |
+|---|-------|--------|
+| 16 | PASS / NICK / USER registration | [ ] |
+| 17 | PRIVMSG to channel | [ ] |
+| 18 | PRIVMSG to user (DM) | [ ] |
+| 19 | JOIN / PART | [ ] |
+| 20 | TOPIC (get and set) | [ ] |
+| 21 | KICK | [ ] |
+| 22 | INVITE (with +i) | [ ] |
+| 23 | MODE +i (invite-only) | [ ] |
+| 24 | MODE +t (topic protection) | [ ] |
+| 25 | MODE +k (channel password) | [ ] |
+| 26 | MODE +o (operator) | [ ] |
+| 27 | MODE +l (user limit) | [ ] |
+| 28 | Regular user CANNOT use operator commands | [ ] |
+| 29 | PING / PONG | [ ] |
+| 30 | QUIT | [ ] |
+
+### Robustness
+
+| # | Check | Status |
+|---|-------|--------|
+| 31 | Empty lines do not crash server | [ ] |
+| 32 | Long strings do not crash server | [ ] |
+| 33 | Binary data does not crash server | [ ] |
+| 34 | Rapid connections do not crash server | [ ] |
+| 35 | Unknown commands return 421 | [ ] |
+| 36 | Case-insensitive nicknames | [ ] |
+| 37 | Case-insensitive channels | [ ] |
+
+---
+
+## Running Automated Tests
+
+After manual verification, you can also run the automated scripts:
+
+```bash
+# From the project root, with server running:
+
+# Multi-client interaction test (15 checks)
+./tests/test_multi_clients.sh 6667 test123
+
+# Stress test with 10 simultaneous clients
+./tests/stress_test_10_clients.sh 6667 test123
+```
