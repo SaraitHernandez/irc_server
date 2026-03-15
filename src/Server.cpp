@@ -334,9 +334,20 @@ void	Server::disconnectClient(int fd) {
 		return;
 	}
 
+	// 1.5) Broadcast QUIT to all channels so other members see "user left"
+	//      (TEAM_CONVENTIONS.md 11.3 - Unexpected Disconnect)
+	std::vector<std::string> channels = client->getChannels();
+	if (!channels.empty() && client->isRegistered()) {
+		std::string quitMsg = ":" + client->getPrefix() + " QUIT :Connection closed\r\n";
+		for (size_t i = 0; i < channels.size(); ++i) {
+			Channel* chan = getChannel(channels[i]);
+			if (chan) {
+				chan->broadcast(this, quitMsg, client);
+			}
+		}
+	}
 
 	// 2) Remove from channels (Dev C - Logic Layer)
-	std::vector<std::string> channels = client->getChannels();
 	for (size_t i = 0; i < channels.size(); ++i) {
 		Channel* chan = getChannel(channels[i]);
 		if (chan) {
