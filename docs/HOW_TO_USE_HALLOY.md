@@ -35,6 +35,12 @@ where:
 
 4. Save
 
+5. Again, click option menu at the bottom left corner
+
+6. Choose "Reload config file"
+
+7. Our ft_irc should appear on the left pane of Halloy
+
 ## Try some commands
 
 When using commands in Halloy, use "/" just before command, e.g. "/JOIN #testchannel"
