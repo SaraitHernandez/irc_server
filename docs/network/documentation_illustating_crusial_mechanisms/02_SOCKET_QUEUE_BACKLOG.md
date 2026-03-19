@@ -1,5 +1,7 @@
 # Socket Queue & Backlog Mechanism
 
+**Part of the networking documentation suite** — [← Back to main pipeline](01_WORKFLOW_PIPELINE.md)
+
 Detailed explanation of the `backlog` parameter in `listen()` system call.
 
 ---
@@ -22,18 +24,18 @@ listen(socket_fd, backlog)
 ```
 CLIENT                              SERVER
   │                                   │
-  ├── SYN ──────────────────────────►│
+  ├── SYN ───────────────────────────►│
   │                                   │ [SYN received]
   │                                   │
   │◄─────────────────────── SYN-ACK ──┤
   │ [ACK received]                    │
   │                                   │
-  ├── ACK ──────────────────────────►│
+  ├── ACK ───────────────────────────►│
   │                                   │ [Connection in queue]
-  │                                   ├─► Accept queue (size = backlog)
+  │                                   ├─► Accept queue (size = backlog) f.ex: 10, 128 
   │                                   │
   │                                   └─► accept() pulls from queue
-  │◄─── Connection established ──────┤
+  │◄─── Connection established ───────┤
 ```
 
 ---
@@ -53,11 +55,11 @@ accept() ────────────┐
                      │
                      ├─ Pull connection from queue
                      │
-                     └────────────┬─────────────┬─────────── ...
-                                  │             │
-                    Waiting conn 1│ Waiting conn 2│ (backlog = 10)
-                                  │             │
-                                  ├─────────────┤
+                     └────────────┬─────────────────┬─────────── ...
+                                  │					│
+                    Waiting conn 1│ Waiting conn 2	│ (backlog = 10)
+                                  │					│
+                                  ├─────────────────┤
 ```
 
 ---
@@ -292,4 +294,14 @@ After accept():   Recv-Q = 2  (1 accepted and handled)
 - **Your server**: Good for testing, fine for small deployments
 - **Production**: Consider `SOMAXCONN` or higher value
 - **Non-blocking pattern**: Your server handles this well with event-driven `accept()`
+
+---
+
+##  Related Documentation
+
+| Document | Topic |
+|---|---|
+| [01_WORKFLOW_PIPELINE.md](01_WORKFLOW_PIPELINE.md) | Complete call chain showing where backlog is used |
+| [03_v4_v6_in_socket_VERIFIED_AGAINST_SUBJECT.md](03_v4_v6_in_socket_VERIFIED_AGAINST_SUBJECT.md) | Socket creation, poll() mechanism, and non-blocking I/O |
+| [0_TERMS_MEANING.md](0_TERMS_MEANING.md) | Hardware interrupts and TCP handshake low-level details |
 
