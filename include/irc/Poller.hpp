@@ -23,6 +23,9 @@ public:
     // Remove file descriptor from watch list
     void removeFd(int fd);
     
+    // Set/change events to watch for a file descriptor
+    void setEvents(int fd, short events);
+    
     // Main polling loop - ONLY place poll() is called
     // Returns number of ready file descriptors
     int poll(int timeout = -1);

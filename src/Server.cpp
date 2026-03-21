@@ -456,6 +456,11 @@ void Server::removeChannel(const std::string& name) {
 // sendToClient
 // ============================================================================
 
+// ============================================================================
+// sendToClient - PRIMARY METHOD FOR SENDING DATA (see TEAM_CONVENTIONS.md)
+// Handles EAGAIN via client send queue with POLLOUT
+// ============================================================================
+
 void Server::sendToClient(int clientFd, const std::string& message)
 {
 	// Ensure message ends with \r\n
@@ -463,14 +468,78 @@ void Server::sendToClient(int clientFd, const std::string& message)
 	if (msg.size() < 2 || msg.substr(msg.size() - 2) != "\r\n")
 		msg += "\r\n";
 
+	Client* client = getClient(clientFd);
+	if (!client) {
+		std::cerr << "[Server] sendToClient: client not found fd=" << clientFd << std::endl;
+		return;
+	}
+
+	// If send queue already has pending data, append to preserve order
+	if (client->hasPendingSend()) {
+		client->enqueueSend(msg);
+		return;
+	}
+
+	// Try to send immediately
 	ssize_t sent = send(clientFd, msg.c_str(), msg.size(), 0);
-	if (sent < 0)
-	{
-		if (errno == EPIPE || errno == ECONNRESET)
+	if (sent < 0) {
+		// Connection errors → disconnect
+		if (errno == EPIPE || errno == ECONNRESET) {
 			disconnectClient(clientFd);
-		else if (errno != EAGAIN && errno != EWOULDBLOCK)
-			std::cerr << "[Server] send() error fd=" << clientFd
-						<< ": " << strerror(errno) << std::endl;
+			return;
+		}
+		// Buffer full (EAGAIN) → queue and register POLLOUT
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			std::cout << "[Server] EAGAIN on fd=" << clientFd 
+					  << " - enqueueing message" << std::endl;
+			client->enqueueSend(msg);
+			poller_->setEvents(clientFd, POLLIN | POLLOUT);
+			return;
+		}
+		// Other errors
+		std::cerr << "[Server] send() error fd=" << clientFd
+					<< ": " << strerror(errno) << std::endl;
+		return;
+	}
+
+	// Partial send → queue the remainder
+	if (static_cast<size_t>(sent) < msg.size()) {
+		std::cout << "[Server] partial send fd=" << clientFd 
+				  << " sent=" << sent << "/" << msg.size() << std::endl;
+		client->enqueueSend(msg.substr(sent));
+		poller_->setEvents(clientFd, POLLIN | POLLOUT);
+	}
+}
+
+// ============================================================================
+// flushClientSendQueue - drain pending sends on POLLOUT
+// ============================================================================
+
+void Server::flushClientSendQueue(int clientFd)
+{
+	Client* client = getClient(clientFd);
+	if (!client || !client->hasPendingSend()) {
+		return;
+	}
+
+	const std::string& queue = client->getSendQueue();
+	ssize_t sent = send(clientFd, queue.c_str(), queue.size(), 0);
+
+	if (sent > 0) {
+		std::cout << "[Server] flushClientSendQueue fd=" << clientFd 
+				  << " sent=" << sent << "/" << queue.size() << std::endl;
+		client->drainSendQueue(static_cast<size_t>(sent));
+	}
+
+	// Connection errors → disconnect
+	if (sent < 0 && (errno == EPIPE || errno == ECONNRESET)) {
+		disconnectClient(clientFd);
+		return;
+	}
+
+	// If queue is now empty, stop watching POLLOUT
+	if (!client->hasPendingSend()) {
+		poller_->setEvents(clientFd, POLLIN);
 	}
 }
 

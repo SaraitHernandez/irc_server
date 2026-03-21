@@ -188,3 +188,28 @@ bool Client::isInChannel(const std::string& channelName) const {
 std::string Client::getPrefix() const {
     return nicknameDisplay_ + "!" + username_ + "@" + hostname_;
 }
+
+// ============================================================================
+// Send queue management (for EAGAIN handling with POLLOUT)
+// ============================================================================
+
+void Client::enqueueSend(const std::string& data) {
+    sendQueue_ += data;
+}
+
+bool Client::hasPendingSend() const {
+    return !sendQueue_.empty();
+}
+
+const std::string& Client::getSendQueue() const {
+    return sendQueue_;
+}
+
+void Client::drainSendQueue(size_t bytesSent) {
+    if (bytesSent >= sendQueue_.size()) {
+        sendQueue_.clear();
+    } else {
+        sendQueue_.erase(0, bytesSent);
+    }
+}
+
