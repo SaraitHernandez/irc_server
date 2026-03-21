@@ -165,27 +165,36 @@ void	Server::run() {
 // - createChannel(const std::string& name)
 // - removeChannel(const std::string& name)
 
-// DONE: createServerSocket(): socket(), set socket options
+// DONE: createServerSocket(): socket(), set socket options (IPv6 dual-stack)
 void	Server::createServerSocket() {
-	serverSocketFd_ = socket(AF_INET, SOCK_STREAM, 0);
+	serverSocketFd_ = socket(AF_INET6, SOCK_STREAM, 0);
 	if (serverSocketFd_ < 0) throw std::runtime_error("socket failed");
 
+	// Enable dual-stack mode FIRST (accept both IPv4 and IPv6 connections)
+	// On Linux, IPV6_V6ONLY defaults to 1 (IPv6 only), on macOS defaults to 0 (dual-stack).
+	// We explicitly set it to 0 for consistent behaviour across all platforms.
+	int no = 0;
+	if (setsockopt(serverSocketFd_, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) < 0) {
+		std::cerr << "[Server] Warning: Failed to set IPV6_V6ONLY to 0" << std::endl;
+	}
+
+	// Allow socket reuse (TIME_WAIT bypass)
 	int opt = 1;
 	setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 }
 
-// DONE: bindSocket(): bind() with config port
+// DONE: bindSocket(): bind() with config port (IPv6 dual-stack)
 void Server::bindSocket() {
-	struct sockaddr_in addr = {};
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(config_.getPort());
-	addr.sin_addr.s_addr = INADDR_ANY;  // 0.0.0.0
+	struct sockaddr_in6 addr = {};
+	addr.sin6_family = AF_INET6;
+	addr.sin6_port = htons(config_.getPort());
+	addr.sin6_addr = in6addr_any;  // :: (all interfaces, both IPv4 and IPv6)
 
 	if (bind(serverSocketFd_, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 		close(serverSocketFd_);
 		throw std::runtime_error("bind failed");
 	}
-	std::cout << "[Server] Bound to port " << config_.getPort() << std::endl;
+	std::cout << "[Server] Bound to port " << config_.getPort() << " (dual-stack IPv6)" << std::endl;
 }
 
 // DONE: listenSocket(): listen() with backlog
@@ -229,10 +238,10 @@ return config_.getPassword();
 }
 
 
-// DONE: Accept new connection, create Client, add to Poller
+// DONE: Accept new connection, create Client, add to Poller (IPv6 dual-stack)
 void Server::handleNewConnection()
 {
-	struct sockaddr_in clientAddr;
+	struct sockaddr_in6 clientAddr;
 	socklen_t clientLen = sizeof(clientAddr);
 
 	int clientFd = accept(serverSocketFd_,
@@ -247,9 +256,10 @@ void Server::handleNewConnection()
 
 	setNonBlocking(clientFd);
 
-	// get real client IP and set as hostname (IPv4 only)
-	char ipStr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &clientAddr.sin_addr, ipStr, sizeof(ipStr));
+	// get real client IP and set as hostname (IPv6 dual-stack)
+	// IPv4 clients arrive as IPv4-mapped IPv6 addresses: ::ffff:192.168.1.5
+	char ipStr[INET6_ADDRSTRLEN];
+	inet_ntop(AF_INET6, &clientAddr.sin6_addr, ipStr, sizeof(ipStr));
 	std::string hostname = ipStr;
 
 	Client* client = new Client(clientFd);
