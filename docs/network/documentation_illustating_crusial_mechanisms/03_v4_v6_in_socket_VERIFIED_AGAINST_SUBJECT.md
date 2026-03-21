@@ -317,7 +317,7 @@ void Server::handleNewConnection() {
 ```
 
 **[IMPORTANT]** The code uses `inet_ntoa()` to extract the client's IP address.
-See [inet_ntoa() vs inet_ntop() Comparison](#deprecated-function-inet-ntoa-vs-inet-ntop) below.
+See [inet_ntoa vs inet_ntop](inet_ntoa_vs_ntop.md) below.
 
 ### Non-blocking I/O requirement
 
