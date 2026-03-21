@@ -16,7 +16,7 @@
 #include <cstring>
 #include <cerrno>	// errno, strerror() — for errors recv/accept
 #include <csignal> // sig_atomic_t, signal(), SIGINT
-#include <arpa/inet.h>  // inet_ntoa()
+#include <arpa/inet.h>  // inet_ntop()
 
 // SIGINT handler
 volatile	sig_atomic_t Server::running_ = true;
@@ -247,8 +247,10 @@ void Server::handleNewConnection()
 
 	setNonBlocking(clientFd);
 
-	// get real client IP and set as hostname
-	std::string hostname = inet_ntoa(clientAddr.sin_addr);
+	// get real client IP and set as hostname (IPv4 only)
+	char ipStr[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &clientAddr.sin_addr, ipStr, sizeof(ipStr));
+	std::string hostname = ipStr;
 
 	Client* client = new Client(clientFd);
 	client->setHostname(hostname);
