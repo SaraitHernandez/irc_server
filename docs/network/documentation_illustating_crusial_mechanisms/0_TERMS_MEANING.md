@@ -87,7 +87,32 @@ IPV6_V6ONLY = 0
 # function—setsockopt with SO_REUSEADDR
 is there for an important reason: without it, after restarting the server, the kernel keeps the port in the TIME_WAIT state for about 2 minutes, 
 and bind() fails with “Address already in use.” With this option, you can reuse the address immediately.
+________________________________________________________________________
+ss -tulnp
 
+`ss` — **socket statistics** (replaces the old `netstat` utility)
+
+Each letter is a separate flag:
+
+| Flag | Full word | Meaning |
+|------|-----------|---------|
+| `-t` | **TCP** | show TCP sockets |
+| `-u` | **UDP** | show UDP sockets |
+| `-l` | **listening** | only sockets waiting for connections |
+| `-n` | **numeric** | don't resolve names, show raw numbers (IPs and ports) |
+| `-p` | **processes** | show which process owns the socket |
+
+Without `-n`:
+```
+127.0.0.1:postgresql   # resolves 5432 → service name
+```
+
+With `-n`:
+```
+127.0.0.1:5432         # shows the number as-is
+```
+
+Without `-l` it would also show established connections — browser, curl, etc. With `-l` — only what is **waiting** for incoming connections, i.e. servers.
 
 ##  Related Documentation
 
