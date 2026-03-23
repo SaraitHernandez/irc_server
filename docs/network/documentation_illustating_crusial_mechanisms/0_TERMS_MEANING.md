@@ -8,8 +8,11 @@ FCNTL
 stands for file control — it manipulates properties of an open file descriptor, analogous to ioctl (input-output control) which targets I/O devices. The header <fcntl.h> is officially described as "file control options" in POSIX.
 
 WHY only fcntl(fd, F_SETFL, O_NONBLOCK) is Allowed:
+
 Prevents workarounds like F_SETLKW blocking waits that bypass poll
 Enforces the intended architecture: one poll loop + non-blocking fds, nothing else
+F_SETFL    = Set File Status Flags
+O_NONBLOCK = Open Non-Blocking
 
 NIC — Network Interface Card
 
