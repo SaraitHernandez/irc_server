@@ -50,6 +50,18 @@ void Poller::removeFd(int fd) {
     }
 }
 
+// DONE: Implement Poller::setEvents(int fd, short events)
+// Change the events to watch for a specific file descriptor (e.g., add POLLOUT)
+void Poller::setEvents(int fd, short events) {
+    int index = findFdIndex(fd);
+    if (index != -1) {
+        pollfds_[index].events = events;
+        std::cout << "[Poller] setEvents fd=" << fd << " events=" << events << std::endl;
+    } else {
+        std::cerr << "[Poller] WARNING: setEvents failed - fd=" << fd << " not found!" << std::endl;
+    }
+}
+
 // DONE: Implement Poller::poll(int timeout)
 // ONLY PLACE poll() IS CALLED - see TEAM_CONVENTIONS.md
 int Poller::poll(int timeout) {
@@ -93,7 +105,11 @@ void Poller::processEvents() {
                 server_->handleNewConnection();
             }
         } else {
-            // Client socket: process POLLIN or POLLHUP
+            // Client socket: handle POLLOUT (drain send queue) FIRST
+            if (revents & POLLOUT) {
+                server_->flushClientSendQueue(fd);
+            }
+            // Then handle POLLIN or POLLHUP
             if (revents & (POLLIN | POLLHUP)) {
                 // handleClientInput handles recv() == 0
                 server_->handleClientInput(fd);

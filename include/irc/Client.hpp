@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sarherna <sarherna@student.42.fr>          +#+  +:+       +#+        */
+/*   By: oostapen <oostapen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/06 14:00:00 by sarherna          #+#    #+#             */
-/*   Updated: 2026/02/07 16:00:00 by sarherna         ###   ########.fr       */
+/*   Updated: 2026/03/22 00:06:47 by oostapen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,12 @@ public:
     std::string& getBuffer();
     void clearBuffer();
     
+    // Send queue management (for EAGAIN handling with POLLOUT)
+    void               enqueueSend(const std::string& data);
+    bool               hasPendingSend() const;
+    const std::string& getSendQueue() const;
+    void               drainSendQueue(size_t bytesSent);
+    
     // Client prefix format: "nick!user@host" (uses display nickname)
     std::string getPrefix() const;
     
@@ -96,6 +102,9 @@ private:
     
     // Channel membership (stores lowercase channel names)
     std::vector<std::string> channels_;
+    
+    // Send queue for EAGAIN handling with POLLOUT
+    std::string sendQueue_;
     
     // NOTE: NO MessageBuffer here (Variant 3)
 };

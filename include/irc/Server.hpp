@@ -58,6 +58,9 @@ public:
 	// Handle client disconnection
 	void		disconnectClient(int clientFd);
 	
+	// Flush pending send queue (called by Poller on POLLOUT)
+	void		flushClientSendQueue(int clientFd);
+	
 	// Send data to a specific client (PRIMARY METHOD - see TEAM_CONVENTIONS.md)
 	void		sendToClient(int clientFd, const std::string& message);
 	
