@@ -94,6 +94,8 @@ NICK alice
 USER alice 0 * :Alice Smith
 ```
 ### our imlementation does not need to proceed <hostname> <servername>
+### designed for server-to-server standard In modern practice clients like Halloy send 0 and * there automatically
+### needed by the WHO and WHOIS commands filled authomatically
 ### howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
 ```
 USER <username> <hostname> <servername> :<realname>
