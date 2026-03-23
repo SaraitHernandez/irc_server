@@ -36,7 +36,8 @@ The `hostname` from the `USER` message does not need to be stored verbatim — t
 
 ```
 USER  alice      0           *           :Alice Smith
-      ^param[0]  ^           ^param[2]   ^trailing
+      ^param[0]  ^param[1]   ^param[2]   ^trailing
+
 ```
 
 - `param[0]` → `alice` — username, passed to `setUsername()`
