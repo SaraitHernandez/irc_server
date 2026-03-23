@@ -40,7 +40,7 @@ USER  alice      0           *           :Alice Smith
 ```
 
 - `param[0]` → `alice` — username, passed to `setUsername()`
-- `param [1]
+- `param[1]` → `0` — hostname, **ignored** (server knows the real address)
 - `param[2]` → `*` — servername, **ignored**
 - `trailing` → `Alice Smith` — realname, saved via `setUsername(username, realname)` 
 ***
