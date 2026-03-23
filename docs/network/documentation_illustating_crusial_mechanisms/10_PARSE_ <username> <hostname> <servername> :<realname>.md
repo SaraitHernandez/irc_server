@@ -33,7 +33,7 @@ const std::string& getRealname() const;  // used by WHO / WHOIS
 ```
 
 The `hostname` from the `USER` message does not need to be stored verbatim — the server can substitute the **real** IP/hostname obtained from `accept()`. 
-
+### How the Example Is Parsed
 ```
 USER  alice      0           *           :Alice Smith
       ^param[0]  ^param[1]   ^param[2]   ^trailing
