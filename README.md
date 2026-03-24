@@ -37,8 +37,8 @@ JOIN #test
 PRIVMSG #test :Hello everyone!
 QUIT :Goodbye
 ```
-### our imlementation does not need to proceed <hostname> <servername>
-### howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
+### our implementation does not need to proceed <hostname> <servername>
+### however it saves it and WHO or WHOIS would easily access if needed (call to write)
 ```
 USER <username> <hostname> <servername> :<realname>
 USER  alice      0           *           :Alice Smith
