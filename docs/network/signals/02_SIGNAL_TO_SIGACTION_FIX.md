@@ -219,21 +219,21 @@ After (with sigaction() + SA_RESTART):
 
 ---
 
-## Signal Handler Code (Unchanged)
+## Signal Handler Code
 
 ```cpp
 static void	signalHandler(int sig) {
 	(void)sig;
-	std::cout << "\n[Server] Signal received, shutting down..." << std::endl;
-	Server::running_ = false;  // Signal-safe: just sets atomic bool
+	Server::running_ = false;  // async-signal-safe: only sets flag
 }
 ```
 
-Handler is minimal and signal-safe:
-- No system calls
+Handler is minimal and async-signal-safe:
+- No system calls (e.g. no `std::cout`, no `write()`)
 - No memory allocation
 - Only sets `volatile sig_atomic_t` variable
 - Works correctly with sigaction()
+- Any shutdown logging is done in the main loop after `running_` becomes false
 
 ---
 

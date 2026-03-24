@@ -89,8 +89,7 @@ void	Server::start() {
 //SIGINT handler
 static void	signalHandler(int sig) {
 	(void)sig;
-	std::cout << "\n[Server] Signal received, shutting down..." << std::endl;
-		Server::running_ = false; // works for SIGINT, SIGTERM, SIGQUIT
+	Server::running_ = false; // async-signal-safe: only sets flag; logging done in main loop
 }
 
 // DONE: Implement Server::run()
