@@ -59,7 +59,7 @@ static bool parse_privmsg(const std::string& line,
     size_t sp1 = line.find(' ');
     size_t sp2 = (sp1 != std::string::npos) ? line.find(' ', sp1 + 1) : std::string::npos;
     size_t sp3 = (sp2 != std::string::npos) ? line.find(' ', sp2 + 1) : std::string::npos;
-    size_t col = line.find(':', 1);
+    size_t col = line.find(':', sp3);   // skip colons inside IPv6 hostmask
 
     if (ex  == std::string::npos || sp1 == std::string::npos ||
         sp2 == std::string::npos || sp3 == std::string::npos)
@@ -71,6 +71,10 @@ static bool parse_privmsg(const std::string& line,
     sender = line.substr(1, ex - 1);
     target = line.substr(sp2 + 1, sp3 - sp2 - 1);
     text   = (col != std::string::npos) ? line.substr(col + 1) : "";
+
+    if (!text.empty() && text[text.size() - 1] == '\r')  // strip trailing \r
+        text.erase(text.size() - 1);
+
     return true;
 }
 

@@ -82,12 +82,25 @@ fg
 ```bash
 bash bonus/test_bot.sh
 ```
-✓ Expected in Terminal 2:
+
+***
+
+## Terminal 2 — Expected output after Terminal 5 commands
+
+After running `test_bot.sh`, Terminal 2 should show:
+
 ```
-:flood_bot!... PRIVMSG #test :pong!
-:flood_bot!... PRIVMSG #test :uptime: 0h Xm Xs
-:flood_bot!... PRIVMSG #test :HELLO EVALUATOR
+[<<SVR] :bottester!bottester@::ffff:127.0.0.1 PRIVMSG #test :!ping
+[BOT>>] PRIVMSG #test :pong!
+
+[<<SVR] :bottester!bottester@::ffff:127.0.0.1 PRIVMSG #test :!uptime
+[BOT>>] PRIVMSG #test :uptime: 0h Xm Xs
+
+[<<SVR] :bottester!bottester@::ffff:127.0.0.1 PRIVMSG #test :!echo HELLO EVALUATOR
+[BOT>>] PRIVMSG #test :HELLO EVALUATOR
 ```
+
+✓ All commands received and responded to correctly (IPv6-mapped hostname parsed correctly)
 
 ## Terminal 1 → stop server → valgrind
 **Ctrl+C** → expect `0 bytes in 0 blocks`, `0 errors`
@@ -96,11 +109,14 @@ bash bonus/test_bot.sh
 
 ## Pass criteria
 
-| Check | Expected |
+| Criterion | Expected Result |
 |---|---|
-| Server alive after flood | no crash, no hang |
-| Client A got all 200 msgs | full burst after `fg` Terminal 3 |
-| Bot survived freeze + flood | resumed after `fg` Terminal 2 |
-| Bot responds to commands | pong / uptime / echo in Terminal 5 |
-| Bot valgrind | 0 bytes, 0 errors |
-| Server valgrind | 0 bytes, 0 errors |
+| **Server stability** | No crash or hang after 200-message flood |
+| **Flood reception** | Client A receives all 200 messages in burst (msg 1–200 visible in Terminal 3 after `fg`) |
+| **Bot resilience** | Bot survives freeze + simultaneous flood; resumes cleanly after `fg` in Terminal 2 |
+| **Bot command: `!ping`** | Bot replies: `PRIVMSG #test :pong!` (visible in Terminal 2) |
+| **Bot command: `!uptime`** | Bot replies: `PRIVMSG #test :uptime: 0h Xm Xs` (visible in Terminal 2) |
+| **Bot command: `!echo <msg>`** | Bot echoes: `PRIVMSG #test :HELLO EVALUATOR` (visible in Terminal 2) |
+| **IPv6-mapped parsing** | Hostmask `:bot@::ffff:127.0.0.1` parses correctly; commands execute (not lost) |
+| **Bot memory** | Valgrind: 0 bytes in 0 blocks, 0 errors |
+| **Server memory** | Valgrind: 0 bytes in 0 blocks, 0 errors |
