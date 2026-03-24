@@ -1,43 +1,38 @@
 #!/usr/bin/env bash
-# flood_channel.sh — persistent single-connection flood test
-# Usage: bash tests/flood_channel.sh
-# Requires: server already running on PORT with PASS
+# flood_channel.sh — wrapper for the canonical flood test
+# Usage: bash bonus/flood_channel.sh
+# This script simply delegates to tests/flood_channel.sh to avoid duplication.
 
-HOST="127.0.0.1"
-PORT=6667
-PASS="testpass"
-NICK="floodbot"
-CHAN="#test"
-COUNT=200
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)"
+CANONICAL_SCRIPT="$SCRIPT_DIR/../tests/flood_channel.sh"
 
-{
-  echo "PASS $PASS"
-  echo "NICK $NICK"
-  echo "USER $NICK 0 * :Flood Bot"
-  sleep 1        # wait for server welcome (001-004)
-  echo "JOIN $CHAN"
-  sleep 0.3      # wait for JOIN ack
-  for i in $(seq 1 $COUNT); do
-    echo "PRIVMSG $CHAN :msg $i"
-  done
-  sleep 1        # let last writes drain before EOF
-} | nc -C "$HOST" "$PORT"
+if [ ! -f "$CANONICAL_SCRIPT" ]; then
+  echo "Canonical flood script not found: $CANONICAL_SCRIPT" >&2
+  exit 1
+fi
 
-# Terminal 1          Terminal 2 (clientA)        Terminal 3 (flood)
-# ──────────          ────────────────────        ──────────────────
-# ./ircserv           nc -C 127.0.0.1 6667
-# 6667 testpass       PASS testpass
-#                     NICK clientA
-#                     USER clientA 0 * :Client A
-#                     JOIN #test
-                    
-#                     Ctrl+Z  ←── freeze
-#                     [1]+ Stopped nc...
-#                     $                           bash tests/flood-channel.sh
-#                                                 (200 messages are sent)
-                    
-#                     fg  ←── enter HERE
-#                     (all 200 messages are sent)
+if [ ! -x "$CANONICAL_SCRIPT" ]; then
+  # Fallback: try to run via bash if not executable
+  exec bash "$CANONICAL_SCRIPT" "$@"
+else
+  exec "$CANONICAL_SCRIPT" "$@"
+fi
 
-# Ctrl+Z and fg always go together in a single terminal
-# fg restores the exact process that was suspended in that same shell
+# The original implementation of the flood test lives in tests/flood_channel.sh.
+# Keep that file as the single source of truth; update this wrapper only if the
+# canonical script's location changes.
+
+# Example usage:
+#   Terminal 1: ./ircserv 6667 testpass
+#   Terminal 2: nc -C 127.0.0.1 6667
+#                PASS testpass
+#                NICK clientA
+#                USER clientA 0 * :Client A
+#                JOIN #test
+#                Ctrl+Z  ←── freeze
+#                [1]+ Stopped nc...
+#                $ bash bonus/flood_channel.sh   # (messages are sent)
+#                fg  ←── resume nc; messages arrive
+
+# Ctrl+Z and fg always go together in a single terminal.
+# fg restores the exact process that was suspended in that same shell.

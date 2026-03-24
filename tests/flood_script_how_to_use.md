@@ -53,7 +53,7 @@ Terminal 1          Terminal 2 (clientA)        Terminal 3 (flood)
                     
                     Ctrl+Z  ←── freeze
                     [1]+ Stopped nc...
-                    $                           bash tests/flood-channel.sh
+                    $                           bash tests/flood_channel.sh
                                                 (200 messages are sent)
                     
                     fg  ←── enter HERE
