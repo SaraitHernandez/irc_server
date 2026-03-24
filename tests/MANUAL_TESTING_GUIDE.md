@@ -87,16 +87,25 @@ valgrind --leak-check=full ./ircserv 6667 test123
 ### 2.1 Basic connection with nc
 
 **Terminal 2:**
+nc -z
+-z (zero I/O mode) — simply checks whether the port is open; it does not send anything. This is the standard way to verify that the server is already listening:
+```
+nc -z 127.0.0.1 6667 && echo "up" || echo "down"
+
+up
+
+```
 ```
 nc 127.0.0.1 6667
 PASS test123
 NICK alice
 USER alice 0 * :Alice Smith
 ```
-### our imlementation does not need to proceed <hostname> <servername>
-### designed for server-to-server standard In modern practice clients like Halloy send 0 and * there automatically
-### needed by the WHO and WHOIS commands filled authomatically
-### howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
+
+our implementation does not need to proceed <hostname> <servername>
+designed for server-to-server standard In modern practice clients like Halloy send 0 and * there automatically
+needed by the WHO and WHOIS commands filled authomatically
+howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
 ```
 USER <username> <hostname> <servername> :<realname>
 USER  alice      0           *           :Alice Smith

@@ -94,3 +94,30 @@ Now check to see **if any messages appeared** in this terminal after `fg`:
 | Nothing at all |  the server does not buffer for frozen clients |
 
 > `[2] - continued` means this was the second background job in zsh — this is normal; the main thing is that `nc` continued running.
+
+_________________________________________________________
+# etymology
+**`fg`** is a built-in Unix shell command for **job control** (task/process management), and its etymology is extremely simple.
+
+## Etymology
+
+**`fg`** = an abbreviation of **fore**·**g**round 
+
+- **fore** (English, archaic) — “before, in front of” (from Proto-Germanic *fura*, cognate with German *vor*)
+- **ground** — here in the sense of “execution environment,” not “ground”
+
+The pair `fg` / `bg` is symmetrical: **bg** = **b**ack**g**round (background mode).
+
+## What `fg` does
+
+`fg` brings a **job** (a background or paused process) back to the foreground — that is, it makes it active again in the current terminal and connects it to stdin/stdout.
+
+```bash
+./ircserv 6667 password &   # run server in background
+fg                          # bring it back to foreground
+fg %1                       # bring job #1 specifically
+```
+
+## Connection to the IRC project
+
+In the context of `ft_irc`, this is useful for debugging: you start the server in the background using `&`, test connections via `nc` in another terminal, and then use `fg` to bring the server back to the foreground to view its output or terminate it with `Ctrl+C`. For `valgrind` memory leak checks (required during evaluation), this is a convenient way to switch between sessions. 

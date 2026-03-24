@@ -8,12 +8,12 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 # Detect OS and set platform-specific flags
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-	# macOS
-	CXXFLAGS += -D__MACOS__
+# macOS
+CXXFLAGS += -D__MACOS__
 endif
 ifeq ($(UNAME_S),Linux)
-	# Linux
-	CXXFLAGS += -D__LINUX__
+# Linux
+CXXFLAGS += -D__LINUX__
 endif
 
 # Directories
@@ -23,14 +23,14 @@ OBJDIR = objs
 
 # Source files (to be added as development progresses)
 SOURCES = $(wildcard $(SRCDIR)/*.cpp) \
-          $(wildcard $(SRCDIR)/commands/*.cpp)
+$(wildcard $(SRCDIR)/commands/*.cpp)
 
 # Object files
 OBJECTS = $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 # Header files for dependency tracking
 INCLUDES = $(wildcard $(INCDIR)/*.hpp) \
-           $(wildcard $(INCDIR)/commands/*.hpp)
+$(wildcard $(INCDIR)/commands/*.hpp)
 
 # Default target
 all: $(NAME)
@@ -39,7 +39,7 @@ all: $(NAME)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 	@mkdir -p $(OBJDIR)/commands
-	
+
 # Link executable (only if object files exist)
 $(NAME): $(OBJDIR) $(OBJECTS)
 	@if [ -z "$(OBJECTS)" ]; then \
@@ -63,15 +63,26 @@ clean:
 	@rm -rf $(OBJDIR)
 	@echo "Clean complete"
 
-# Full clean (objects + executable)
+# Full clean (objects + executable + bot binary)
 fclean: clean
 	@echo "Removing $(NAME)..."
 	@rm -f $(NAME)
+	@rm -f $(BOT_NAME)
 	@echo "Full clean complete"
 
 # Rebuild (fclean + all)
 re: fclean all
 
-# Phony targets
-.PHONY: all clean fclean re
+# ── bonus: IRC bot ────────────────────────────────────────────────────────────
+# Compiled separately; does NOT affect the main server build.
+# bot binary is standalone — uses only standard C++98 + POSIX sockets.
+BOT_NAME = channel_flood_bot
+BOT_SRC  = src/bot/channel_flood_bot.cpp
 
+bot: $(BOT_SRC)
+	@echo "Compiling $(BOT_NAME)..."
+	$(CXX) $(CXXFLAGS) -o $(BOT_NAME) $(BOT_SRC)
+	@echo "$(BOT_NAME) compiled successfully"
+
+# Phony targets
+.PHONY: all clean fclean re bot

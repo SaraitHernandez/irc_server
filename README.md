@@ -37,7 +37,12 @@ JOIN #test
 PRIVMSG #test :Hello everyone!
 QUIT :Goodbye
 ```
-
+### our imlementation does not need to proceed <hostname> <servername>
+### howhever it saves it and WHO or WHOIS would easily access if needed (call to write)
+```
+USER <username> <hostname> <servername> :<realname>
+USER  alice      0           *           :Alice Smith
+```
 **Using irssi:**
 ```bash
 irssi -c localhost -p 6667
