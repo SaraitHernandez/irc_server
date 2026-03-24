@@ -11,11 +11,15 @@ ft_irc/
 │   ├── ...                        ← built as part of ircserv
 │   └── bot/
 │       └── channel_flood_bot.cpp  ← built only via make bot
-└── tests/
-    └── bonus/
+└── bonus/
         ├── flood_channel.sh       ← flood test (200 PRIVMSG)
         └── test_bot.sh            ← bot command verification
-
+		↑
+		via make bot
+		└── tests/
+			└── bonus/
+				├── flood_channel.sh       ← flood test (200 PRIVMSG)
+				└── test_bot.sh            ← bot command verification
 ```
 
 ***

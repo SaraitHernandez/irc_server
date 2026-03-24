@@ -6,7 +6,7 @@
 ```
 
 ```bash
-# Terminal 2 — Client A (victim)
+# Terminal 2 — Client A (pause it with Ctrl+Z)
 nc -C 127.0.0.1 6667
 ```
 Then manually enter the handshake:
