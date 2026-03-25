@@ -262,3 +262,4 @@ void Server::flushClientSendQueue(int clientFd)
 ✅ **RFC compliant** - standard poll/POLLOUT pattern
 
 **Status:** READY FOR PRODUCTION
+[BONUS part and TEST explained in CHANNEL_FLOOD_BOT.md](../../bonus/CHANNEL_FLOOD_BOT_HOW_TO_USE.md)
