@@ -4,7 +4,7 @@ All PlayBot documentation is organized in this folder: `docs/bonus/playbot/`
 
 ## Quick Documents
 
-### 📚 Getting Started
+### (´▽｀)ノ Getting Started
 - **[PLAYBOT_HOW_TO_USE.md](PLAYBOT_HOW_TO_USE.md)** — Complete usage guide
   - Build & run instructions
   - Interactive testing with `nc`
@@ -12,7 +12,7 @@ All PlayBot documentation is organized in this folder: `docs/bonus/playbot/`
   - Design patterns & non-blocking timing
   - C++98 compliance & memory management
 
-### 🏗️ Architecture & Design
+### ٩(◕‿◕｡)۶ Architecture & Design
 - **[PLAYBOT_ARCHITECTURE.md](PLAYBOT_ARCHITECTURE.md)** — Technical deep-dive (English)
   - Three-layer architecture (BotCore/BotCommands/BotMain)
   - Design principles (poll-driven alerts, transparent PING/PONG)
@@ -23,7 +23,7 @@ All PlayBot documentation is organized in this folder: `docs/bonus/playbot/`
   - Принципы дизайна (управление временем через poll, прозрачный PING/PONG)
   - Метрики производительности
 
-### 💡 Conceptual Overview
+### (*´∇｀*) Conceptual Overview
 - **[MEANING_OF_PLAYBOT.md](MEANING_OF_PLAYBOT.md)** — What is playbot vs channelfloodbot
   - Quick comparison table
   - Basic test scenario
@@ -76,12 +76,12 @@ src/bot/
 
 ## Key Features At a Glance
 
-✅ **Poll-Driven Timing** — 60s alert without `sleep()` blocking  
-✅ **Transparent PING/PONG** — Connection stays alive automatically  
-✅ **Auto-Reconnect** — Up to 5 retries with 3s exponential backoff  
-✅ **C++98 Pure** — -Wall -Wextra -Werror, 0 memory leaks  
-✅ **5 Commands** — !ping !echo !time !uptime !help  
-✅ **Foundation Ready** — Extensible for Part 2 (!play command)  
+(´▽｀)ノ **Poll-Driven Timing** — 60s alert without `sleep()` blocking  
+(´▽｀)ノ **Transparent PING/PONG** — Connection stays alive automatically  
+(´▽｀)ノ **Auto-Reconnect** — Up to 5 retries with 3s exponential backoff  
+(´▽｀)ノ **C++98 Pure** — -Wall -Wextra -Werror, 0 memory leaks  
+(´▽｀)ノ **5 Commands** — !ping !echo !time !uptime !help  
+(ﾉ´ヮ´)ﾉ*:･ﾟ✧ **Foundation Ready** — Extensible for Part 2 (!play command)  
 
 ---
 
@@ -103,10 +103,10 @@ src/bot/
 ## Testing & Verification
 
 All features covered by:
-- ✓ Compilation with strict C++98 flags
-- ✓ Manual testing with `nc`
-- ✓ Valgrind validation (0 leaks, 0 errors)
-- ✓ Alert timing precision tests
+- (´▽｀) Compilation with strict C++98 flags
+- (´▽｀) Manual testing with `nc`
+- (´▽｀) Valgrind validation (0 leaks, 0 errors)
+- (´▽｀) Alert timing precision tests
 
 See [PLAYBOT_HOW_TO_USE.md](PLAYBOT_HOW_TO_USE.md#testing) for detailed test scenarios.
 
