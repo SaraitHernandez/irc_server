@@ -68,12 +68,13 @@ fclean: clean
 	@echo "Removing $(NAME)..."
 	@rm -f $(NAME)
 	@rm -f $(BOT_NAME)
+	@rm -f $(PLAYBOT_NAME)
 	@echo "Full clean complete"
 
 # Rebuild (fclean + all)
 re: fclean all
 
-# ── bonus: IRC bot ────────────────────────────────────────────────────────────
+# ── bonus: IRC bot (channel flood tester) ────────────────────────────────────
 # Compiled separately; does NOT affect the main server build.
 # bot binary is standalone — uses only standard C++98 + POSIX sockets.
 BOT_NAME = channel_flood_bot
@@ -84,5 +85,16 @@ bot: $(BOT_SRC)
 	$(CXX) $(CXXFLAGS) -o $(BOT_NAME) $(BOT_SRC)
 	@echo "$(BOT_NAME) compiled successfully"
 
+# ── bonus: PlayBot (command dispatch + reconnect) ─────────────────────────────
+# BotCore (transport) + BotCommands (dispatch) + BotMain (loop)
+PLAYBOT_NAME = playbot
+PLAYBOT_SRC  = src/bot/BotCore.cpp src/bot/BotCommands.cpp src/bot/BotMain.cpp
+PLAYBOT_OBJ  = $(PLAYBOT_SRC:%.cpp=%.o)
+
+playbot: $(PLAYBOT_SRC)
+	@echo "Compiling $(PLAYBOT_NAME)..."
+	$(CXX) $(CXXFLAGS) -Iinclude -o $(PLAYBOT_NAME) $(PLAYBOT_SRC)
+	@echo "$(PLAYBOT_NAME) compiled successfully"
+
 # Phony targets
-.PHONY: all clean fclean re bot
+.PHONY: all clean fclean re bot playbot
