@@ -88,11 +88,19 @@ Bot will:
 
 ### Interact (Terminal 3)
 
+Then manually (or via script):
+
+```bash
+bash bonus/test_playbot.sh
+```
+
+**Or manually with netcat:**
+
 ```bash
 nc 127.0.0.1 6667
 ```
 
-Then manually (or via script):
+Then input:
 ```
 PASS testpass
 NICK testuser

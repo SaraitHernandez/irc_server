@@ -85,6 +85,7 @@ bool isConnected() const;                // fd >= 0
 !uptime       → uptime in seconds since bot start
 !help         → command list + teaser: "coming soon: !play"
 ```
+[detailed commands explained in](PLAYBOT_COMMANDS.md)
 
 ### 3. Event Loop (BotMain)
 
@@ -195,4 +196,81 @@ valgrind --leak-check=full ./playbot 127.0.0.1 6667 testpass playbot #general
 - **Memory:** ~2KB for buffers + sockets
 - **Alert Precision:** ±100ms (within poll() resolution)
 - **Reconnect Latency:** 3s + DNS lookup (~50-500ms)
+
+---
+
+## Quick Brain Map ┌|∵|┘
+
+**Three Layers = Three Files:**
+
+| Layer | File | Job | Breaks If... |
+|-------|------|-----|---|
+| **Transport** | `BotCore.cpp` | Socket + poll + reconnect | Can't connect |
+| **Logic** | `BotCommands.cpp` | Parse MessageCommandRoute | Doesn't understand messages |
+| **Timing** | `BotMain.cpp` | Loop + alert every 60s | Bot freezes |
+
+**Why This Shape?**
+- **Separation of concerns:** Network ≠ Logic ≠ Timing
+- **Easy debugging:** Connection issue? Check BotCore. Message issue? Check BotCommands.
+- **Reusable:** BotCore can be used by other bots, BotCommands handlers can be extended.
+
+(￢_￢;) Architecture Checklist:
+
+- [OK] (･ω･)ノ Each file does ONE thing
+- [OK] (･ω･)ノ BotCore handles network chaos (reconnects, PING/PONG)
+- [OK] (･ω･)ノ BotCommands never touches sockets
+- [OK] (･ω･)ノ BotMain is just an orchestrator
+- [OK] (･ω･)ノ No global state, no spaghetti
+
+---
+
+## Modularity: Reusable Library Pattern ┌|∵|┘
+
+**BotCore is NOT PlayBot-specific.** It's a library for any IRC bot.
+
+| Component | Reusable? | Locked To PlayBot? |
+|-----------|-----------|---|
+| **BotCore.cpp** | [+] **YES** — pure IRC transport | [-] NO — generic socket/poll/register |
+| **BotCommands.cpp** | [-] **NO** — has `!ping`, `!echo`, `!time` | [+] YES — PlayBot-only handlers |
+| **BotMain.cpp** | [-] **NO** — has 60s alert loop | [+] YES — PlayBot timing logic |
+
+**Proof: Any bot could use BotCore**
+
+If you built `song_bot`:
+```cpp
+// song_bot.cpp — hypothetical new bot
+#include "irc/bot/BotCore.hpp"
+
+int main() {
+    BotCore core("127.0.0.1", 6667, "pass", "song_bot", "#song");
+    core.connect();
+    core.registerIRC();
+    
+    while (true) {
+        std::vector<std::string> lines = core.tick(1000);
+        for (auto& line : lines) {
+            if (line.find("!play") != std::string::npos) {
+                core.sendRaw("PRIVMSG #song :Now singing...");
+            }
+        }
+    }
+}
+```
+
+[+] **BotCore used. BotCommands NOT used. Clean reuse.**
+
+**Design: Cake Pattern (from bottom)**
+```
+Layer 3: BotMain         [PlayBot loop logic]
+   ▲
+   ├─ uses →
+   │
+Layer 2: BotCommands     [PlayBot dispatch logic]
+   ▲
+   ├─ uses →
+   │
+Layer 1: BotCore         [Generic IRC library]
+```
+
+Swap Layers 2+3 → get different bot. Layer 1 lives forever. └[∵┌] 
 

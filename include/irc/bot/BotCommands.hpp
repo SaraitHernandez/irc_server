@@ -34,6 +34,7 @@ private:
     void cmdTime(const std::string& reply);
     void cmdUptime(const std::string& reply);
     void cmdHelp(const std::string& reply);
+    std::string formatUptime() const;
 };
 
 #endif

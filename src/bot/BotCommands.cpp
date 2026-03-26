@@ -52,9 +52,8 @@ bool BotCommands::parsePrivmsg(const std::string& line,
 void BotCommands::dispatch(const std::string& line)
 {
     std::string sender, target, text;
-    if (parsePrivmsg(line, sender, target, text)) {
+    if (parsePrivmsg(line, sender, target, text))
         handle(sender, target, text);
-    }
 }
 
 void BotCommands::cmdPing(const std::string& reply)
@@ -64,30 +63,29 @@ void BotCommands::cmdPing(const std::string& reply)
 
 void BotCommands::cmdEcho(const std::string& reply, const std::string& text)
 {
-    if (text.size() > 6) {
-        core_->sendRaw("PRIVMSG " + reply + " :" + text.substr(6));
-    }
+    core_->sendRaw("PRIVMSG " + reply + " :" + text.substr(6));
 }
 
 void BotCommands::cmdTime(const std::string& reply)
 {
     time_t now = time(NULL);
-    std::string time_str = ctime(&now);
-    if (!time_str.empty() && time_str[time_str.size() - 1] == '\n')
-        time_str.erase(time_str.size() - 1);
-    core_->sendRaw("PRIVMSG " + reply + " :" + time_str);
+    std::string t = ctime(&now);
+    if (!t.empty() && t[t.size() - 1] == '\n')
+        t.erase(t.size() - 1);
+    core_->sendRaw("PRIVMSG " + reply + " :" + t);
 }
 
 void BotCommands::cmdUptime(const std::string& reply)
 {
-    time_t now = time(NULL);
-    long uptime = static_cast<long>(difftime(now, start_time_));
+    core_->sendRaw("PRIVMSG " + reply + " :uptime: " + formatUptime());
+}
 
+std::string BotCommands::formatUptime() const
+{
+    long s = static_cast<long>(difftime(time(NULL), start_time_));
     std::ostringstream oss;
-    oss << uptime;
-    std::string uptime_str = oss.str();
-
-    core_->sendRaw("PRIVMSG " + reply + " :uptime: " + uptime_str + "s");
+    oss << s / 3600 << "h " << (s % 3600) / 60 << "m " << s % 60 << "s";
+    return oss.str();
 }
 
 void BotCommands::cmdHelp(const std::string& reply)
@@ -104,8 +102,11 @@ void BotCommands::handle(const std::string& sender,
 
     if (text == "!ping") {
         cmdPing(reply);
-    } else if (text.size() > 6 && text.substr(0, 6) == "!echo ") {
-        cmdEcho(reply, text);
+    } else if (text.size() >= 5 && text.substr(0, 5) == "!echo") {
+        if (text.size() > 6)
+            cmdEcho(reply, text);
+        else
+            core_->sendRaw("PRIVMSG " + reply + " :usage: !echo <text>");
     } else if (text == "!time") {
         cmdTime(reply);
     } else if (text == "!uptime") {
