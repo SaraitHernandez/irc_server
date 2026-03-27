@@ -1,4 +1,3 @@
-EAGAIN_FIX_REPORT.md << 'EOF'
 # Fix: EAGAIN Silent Data Loss in sendToClient()
 
 **Date:** March 22, 2026  

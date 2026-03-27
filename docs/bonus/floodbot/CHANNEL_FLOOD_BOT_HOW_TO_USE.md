@@ -1,5 +1,5 @@
-# eagain_lost in SendToClient()
-[problem described in](../network/eagain_lost_in_send_to_client/send_eagain_fixed.md)
+# ┌|∵|┘ FLOODBOT solves EAGAIN Silent Data Loss in sendToClient()
+[problem problem and motivation behind the document described in send_eagain_fixed.md [o_0] CLICK TO READ](../../network/eagain_lost_in_send_to_client/send_eagain_fixed.md)
 ```
 ft_irc/
 ├── ircserv                        ← main server binary (make re)
