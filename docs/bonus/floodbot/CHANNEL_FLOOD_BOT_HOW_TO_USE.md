@@ -51,7 +51,8 @@ valgrind --leak-check=full --track-fds=yes ./ircserv 6667 testpass
 ```bash
 ./channel_flood_bot
 ```
-Wait for `[*] joined #test — listening` → **Ctrl+Z** ← freeze bot
+Wait for `[*] joined #test — listening` → **Ctrl+Z** ← freeze bot \
+The process is still running, the TCP connection has not been closed, but the client is not reading incoming data from the socket.
 ```
 zsh: suspended
 ```
@@ -60,7 +61,10 @@ zsh: suspended
 nc -C 127.0.0.1 6667
 ```
 ```
-PASS testpass / NICK clientA / USER clientA 0 * :Client A / JOIN #test
+PASS testpass
+NICK clientA
+USER clientA 0 * :Client A
+JOIN #test
 ```
 Wait for `:ft_irc 366 ... End of /NAMES list` → **Ctrl+Z** ← freeze client A
 ```
@@ -72,7 +76,7 @@ bash bonus/flood_channel.sh
 ```
 Wait for script to finish.
 
-## Terminal 3 — unfreeze client A
+## Terminal 3 — unfreeze client A (fg - means foreground)
 ```bash
 fg
 ```
@@ -126,3 +130,42 @@ After running `test_bot.sh`, Terminal 2 should show:
 | **IPv6-mapped parsing** | Hostmask `:bot@::ffff:127.0.0.1` parses correctly; commands execute (not lost) |
 | **Bot memory** | Valgrind: 0 bytes in 0 blocks, 0 errors |
 | **Server memory** | Valgrind: 0 bytes in 0 blocks, 0 errors |
+
+________________________________________________________________________________________________________________
+## Interpretation of `353` and `366` messages
+
+Standard IRC server responses to the `JOIN` command sent by the bot when connecting to `#test`.
+
+---
+
+### `[<<SVR] :ft_irc 353 flood_bot = #test :@flood_bot`
+
+| Field | Value | Meaning |
+|---|---|---|
+| `353` | `RPL_NAMREPLY` | Server replies with channel member list |
+| `flood_bot` | recipient | Who the reply is addressed to (the bot) |
+| `=` | channel type | public channel (`=` public, `@` secret, `*` private) |
+| `#test` | channel | channel name |
+| `:@flood_bot` | nick list | `@` = bot has **operator** status in the channel |
+
+---
+
+### `[<<SVR] :ft_irc 366 flood_bot #test :End of /NAMES list`
+
+| Field | Value | Meaning |
+|---|---|---|
+| `366` | `RPL_ENDOFNAMES` | End of member list |
+| `flood_bot` | recipient | addressed to the bot |
+| `#test` | channel | for this channel |
+
+---
+
+### Role in the test scenario
+
+`353` + `366` = **confirmation that JOIN succeeded** and the client/bot is fully in the channel. The flood test must not be started until `366` is received — it is the readiness signal in both Terminal 2 (bot logs `joined #test — listening`) and Terminal 3 (client A freezes with Ctrl+Z only after seeing `366`).
+
+`RPL_ENDOFNAMES (366)` is just a **terminator**. IRC first sends one or more `353` packets with nick lists, and `366` means "list is over, no more nicks coming".
+
+Similar to HTTP `Content-Length` or EOF: the client has no way to know in advance how many `353` packets will arrive, so `366` tells it "JOIN can now be considered complete".
+
+In this case the bot is alone in the channel, so there is only one `353` with a short list — `@flood_bot`. But the mechanism is identical for channels with thousands of members.
