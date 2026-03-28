@@ -320,4 +320,4 @@ Server::flushClientSendQueue(clientFd)
 **Status:** READY FOR PRODUCTION
 [BONUS part and TEST explained in CHANNEL_FLOOD_BOT.md](../../bonus/floodbot/CHANNEL_FLOOD_BOT_HOW_TO_USE.md)
 
-[BONUS part and TEST explained in CHANNEL_FLOOD_BOT.md](../../assets/SendToClient.jpg)
+![SendToClient](../../assets/SendToClient.jpg)
