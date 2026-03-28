@@ -52,6 +52,24 @@ char ipStr[INET6_ADDRSTRLEN];
 inet_ntop(AF_INET6, &clientAddr.sin6_addr, ipStr, sizeof(ipStr));
 // Linux + macOS identically: "::ffff:192.168.1.5"
 ```
+## loop for IPv4 and IPv6 on one socket
+```
+void Server::createServerSocket() {
+    serverSocketFd_ = socket(AF_INET6, SOCK_STREAM, 0);
+    if (serverSocketFd_ < 0)
+        throw std::runtime_error(“socket failed”);
+
+    // Enable both IPv4 and IPv6 on a single socket
+    int no = 0;
+    if (setsockopt(serverSocketFd_, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no)) < 0)
+        throw std::runtime_error(“setsockopt IPV6_V6ONLY failed”);
+
+    // Reuse the address after restart
+    int opt = 1;
+    setsockopt(serverSocketFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+}
+
+```
 
 ---
 

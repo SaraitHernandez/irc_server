@@ -1,4 +1,3 @@
-EAGAIN_FIX_REPORT.md << 'EOF'
 # Fix: EAGAIN Silent Data Loss in sendToClient()
 
 **Date:** March 22, 2026  
@@ -8,7 +7,13 @@ EAGAIN_FIX_REPORT.md << 'EOF'
 
 ## Problem Statement
 
-The original `sendToClient()` implementation had a critical bug:
+The original `sendToClient()` implementation had a critical bug
+When the server sends a message to a client, 
+the OS can reply EAGAIN — meaning "TCP buffer is full, try later."
+
+Before: code saw EAGAIN → did nothing → message silently vanished.
+
+After: code saw EAGAIN → put message in a queue → waited for socket to become writable (POLLOUT) → sent it then:
 
 ```cpp
 // BUGGY CODE - Silent data loss on EAGAIN
@@ -186,6 +191,57 @@ void Server::flushClientSendQueue(int clientFd)
 | `include/irc/Server.hpp` | Add flushClientSendQueue() declaration |
 | `src/Server.cpp` | Rewrite sendToClient(), add flushClientSendQueue() |
 
+```
+Server::sendToClient(clientFd, message)
+│
+├─ client has pending queue? YES ✓
+│   └─► enqueueSend(msg)          ← preserve order, stop here
+│
+└─ client has pending queue? NO ✗
+    │
+    └─► send(clientFd, msg)
+        │
+        ├─ sent > 0 (full send)? YES ✓
+        │   └─► done ✅
+        │
+        ├─ sent > 0 but partial? YES ✓
+        │   ├─► enqueueSend(remainder)
+        │   └─► poller->setEvents(POLLIN | POLLOUT)  ← watch for writable
+        │
+        └─ sent < 0 (error)? YES ✓
+            │
+            ├─ errno == EPIPE / ECONNRESET? YES ✓
+            │   └─► disconnectClient()  ← dead connection, drop it
+            │
+            └─ errno == EAGAIN / EWOULDBLOCK? YES ✓
+                ├─► enqueueSend(msg)               ← save message
+                └─► poller->setEvents(POLLIN | POLLOUT)  ← wait for space
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POLLOUT fires → socket is writable again
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Server::flushClientSendQueue(clientFd)
+│
+├─ no pending data? YES ✓
+│   └─► return (nothing to do)
+│
+└─ has pending data? YES ✓
+    │
+    └─► send(queue)
+        │
+        ├─ sent > 0? YES ✓
+        │   └─► drainSendQueue(sent)
+        │       │
+        │       ├─ queue still has data? YES ✓
+        │       │   └─► keep POLLOUT on  ← wait for next writable event
+        │       │
+        │       └─ queue empty? YES ✓
+        │           └─► poller->setEvents(POLLIN)  ← stop watching POLLOUT ✅
+        │
+        └─ sent < 0 → EPIPE / ECONNRESET? YES ✓
+            └─► disconnectClient()  ← give up, client is gone
+```
 ---
 
 ## Test Results
@@ -262,3 +318,6 @@ void Server::flushClientSendQueue(int clientFd)
 ✅ **RFC compliant** - standard poll/POLLOUT pattern
 
 **Status:** READY FOR PRODUCTION
+[BONUS part and TEST explained in CHANNEL_FLOOD_BOT.md](../../bonus/floodbot/CHANNEL_FLOOD_BOT_HOW_TO_USE.md)
+
+![SendToClient](../../assets/SendToClient.jpg)
