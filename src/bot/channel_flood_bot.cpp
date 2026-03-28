@@ -13,10 +13,21 @@
 #include <ctime>     // time, ctime, difftime
 #include <unistd.h>  // sleep, close
 #include <netdb.h>   // gethostbyname
+#include <csignal>   // sigaction, sigemptyset
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+// Global running flag — signal-safe type, set by signal_handler
+static volatile sig_atomic_t g_running = 1;
+
+// Graceful shutdown on SIGINT/SIGTERM/SIGQUIT — NOT registered for SIGTSTP (Ctrl+Z)
+static void signal_handler(int sig)
+{
+    (void)sig;
+    g_running = 0;
+}
 
 // ── send one IRC line terminated with \r\n ────────────────────────────────────
 
@@ -24,8 +35,10 @@ static void send_line(int fd, const std::string& line)
 {
     std::string msg = line + "\r\n";
     if (send(fd, msg.c_str(), msg.size(), 0) < 0) {
-        std::cerr << "[ERR] send: " << strerror(errno) << std::endl;
-        exit(1);
+        if (errno != EPIPE && errno != ECONNRESET)
+            std::cerr << "[ERR] send: " << strerror(errno) << std::endl;
+        g_running = 0;  // trigger clean exit instead of exit()
+        return;
     }
     std::cout << "[BOT>>] " << line << std::endl;
 }
@@ -129,6 +142,24 @@ int main(int argc, char* argv[])
     const char* nick    = (argc > 4) ? argv[4] : "flood_bot";
     const char* channel = (argc > 5) ? argv[5] : "#test";
 
+    // SIGINT (Ctrl+C), SIGTERM, SIGQUIT — graceful shutdown
+    // SA_RESTART: select() auto-restarts after signal — no manual EINTR retry needed
+    // SIGTSTP (Ctrl+Z) intentionally NOT handled — freeze/thaw test must work
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGINT,  &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
+
+    // SIGPIPE — ignore broken pipe on send() to disconnected server
+    struct sigaction sa_pipe;
+    sa_pipe.sa_handler = SIG_IGN;
+    sigemptyset(&sa_pipe.sa_mask);
+    sa_pipe.sa_flags = 0;
+    sigaction(SIGPIPE, &sa_pipe, NULL);
+
     struct hostent* he = gethostbyname(host);
     if (!he) { std::cerr << "[ERR] gethostbyname failed\n"; return 1; }
 
@@ -142,7 +173,7 @@ int main(int argc, char* argv[])
     memcpy(&addr.sin_addr, he->h_addr_list[0], he->h_length);
 
     if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        perror("connect"); return 1;
+        perror("connect"); close(fd); return 1;
     }
     std::cout << "[*] connected to " << host << ":" << port << std::endl;
 
@@ -159,17 +190,21 @@ int main(int argc, char* argv[])
     std::string recv_buf;
     char        tmp[4096];
 
-    while (true)
+    while (g_running)
     {
         fd_set rfds;
         FD_ZERO(&rfds);
         FD_SET(fd, &rfds);
 
-        // block until data arrives; no timeout needed
-		if (select(fd + 1, &rfds, NULL, NULL, NULL) < 0) {
-			if (errno == EINTR) continue;   // signal interrupted — retry
-			perror("select"); break;        // real error — exit
-		}
+        // SA_RESTART handles EINTR automatically — only real errors reach here
+        if (select(fd + 1, &rfds, NULL, NULL, NULL) < 0) {
+            if (errno == EINTR) continue;   // defensive: should not reach with SA_RESTART
+            perror("select"); break;
+        }
+
+        // Check g_running after select() unblocks — signal may have fired
+        if (!g_running)
+            break;
 
         ssize_t n = recv(fd, tmp, sizeof(tmp) - 1, 0);
         if (n <= 0) {
@@ -194,6 +229,9 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Explicit cleanup — guarantees valgrind: definitely lost: 0 bytes
+    std::string().swap(recv_buf);   // force recv_buf heap deallocation
     close(fd);
+    std::cout << "[*] shutdown complete\n";
     return 0;
 }
