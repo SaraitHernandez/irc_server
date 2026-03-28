@@ -51,15 +51,18 @@ void handlePrivmsg(Server& server, Client& client, const Command& cmd) {
         return;
     }
     
-    if (cmd.trailing.empty()) {
+    std::string target = getParam(cmd, 0);
+    // Message: trailing (after ':') or second param (Halloy sends PRIVMSG #chan msg without ':')
+    std::string message = cmd.trailing;
+    if (message.empty()) {
+        message = getParam(cmd, 1);
+    }
+    if (message.empty()) {
         // ERR_NOTEXTTOSEND (412)
-        server.sendToClient(fd, ":server 412 " + nick + 
+        server.sendToClient(fd, ":server 412 " + nick +
                            " :No text to send\r\n");
         return;
     }
-    
-    std::string target = getParam(cmd, 0);
-    std::string message = cmd.trailing;
     
     // 3. Determine target type: channel or user
     if (Utils::isChannelName(target)) {

@@ -74,16 +74,22 @@ void handleMode(Server& server, Client& client, const Command& cmd) {
     
     // 5. Query vs. Set mode
     if (cmd.params.size() == 1) {
-        // Query modes
+        // Query modes (+k / +l need parameter values in 324 per RFC)
         std::string modes = channel->getModeString();
         if (modes.empty()) {
             modes = "+";
         }
-        
+        std::string modeParams;
+        if (channel->hasMode('k')) {
+            modeParams += " " + channel->getChannelKey();
+        }
+        if (channel->hasMode('l')) {
+            modeParams += " " + Utils::intToString(channel->getUserLimit());
+        }
         // RPL_CHANNELMODEIS (324)
         server.sendToClient(fd, Replies::numeric(
             Replies::RPL_CHANNELMODEIS, nick,
-            channel->getNameDisplay() + " " + modes, ""));
+            channel->getNameDisplay() + " " + modes + modeParams, ""));
         return;
     }
     

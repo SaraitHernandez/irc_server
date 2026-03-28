@@ -245,6 +245,12 @@ Send data byte-by-byte or in chunks:
 
 ## Section 4 — Authentication
 
+> **IRC numeric reply format (RFC 2812):** Replies look like  
+> `:servername numeric nickname_or_* :message`  
+> Before you have a **nickname**, the server uses `*` in the nickname slot.  
+> Example: `:ft_irc 464 * :Password incorrect` — same meaning as “464 :Password incorrect” in short form.  
+> This is **correct**; not a bug.
+
 ### 4.1 Successful registration (PASS → NICK → USER)
 
 ```
@@ -265,7 +271,7 @@ USER alice 0 * :Alice Smith
 PASS wrongpassword
 ```
 
-- [ ] Receives `464 :Password incorrect`
+- [ ] Receives `464` with trailing `Password incorrect` (full form: `:ft_irc 464 * :Password incorrect` — `*` is the nick slot before registration)
 - [ ] Can retry with correct password
 
 ### 4.3 Password retry limit (3 attempts)
@@ -285,7 +291,7 @@ PASS wrong3
 NICK alice
 ```
 
-- [ ] Receives `451 :You have not registered`
+- [ ] Receives `451` (full form: `:ft_irc 451 * :You have not registered`)
 
 ### 4.5 USER before NICK (wrong order)
 
@@ -294,7 +300,7 @@ PASS test123
 USER alice 0 * :Alice
 ```
 
-- [ ] Receives `451 :You have not registered`
+- [ ] Receives `451` (full form: `:ft_irc 451 * :You have not registered`)
 
 ### 4.6 Commands before registration
 
@@ -303,7 +309,7 @@ JOIN #test
 PRIVMSG #test :hello
 ```
 
-- [ ] Receives `451 :You have not registered` for each command
+- [ ] Receives `451 :You have not registered` for each command (nick slot may be `*` before registration)
 
 ### 4.7 Empty NICK
 
@@ -479,6 +485,8 @@ JOIN #test
 ---
 
 ## Section 6 — Messaging (PRIVMSG)
+
+> **Halloy / clients without `:`:** Some clients send `PRIVMSG #channel hello` (no `:` before a single word). The server accepts the message as the second parameter — same effect as `PRIVMSG #channel :hello`.
 
 ### 6.1 Channel message
 
@@ -882,7 +890,7 @@ MODE #test +o ghostuser
 MODE #test
 ```
 
-- [ ] Receives `324` with current mode string (e.g. `+it`, `+k`, `+l 5`)
+- [ ] Receives `324` with current mode string (e.g. `+it`, `+k <key>` when `+k` is set, `+l <number>` when `+l` is set — parameters must appear after the mode letters)
 
 ---
 
@@ -940,14 +948,16 @@ PING :test123
 
 ### 10.2 Client PONG
 
-If the server sends a PING, respond:
+> **Note:** This server does **not** send periodic keepalive PINGs to clients (no idle timeout). You cannot test “reply to server PING” unless you add that feature later.  
+> The **PONG** command is still accepted: if you send `PONG :anything` (e.g. from a client that echoes), the server handles it and the connection stays up.
 
-```
-PONG :server_token
+**Optional manual check:** send `PONG :test` after registration.
+
+```text
+PONG :test
 ```
 
-- [ ] Server accepts the PONG
-- [ ] Connection stays alive
+- [ ] Server does not disconnect (no error); connection stays alive
 
 ---
 

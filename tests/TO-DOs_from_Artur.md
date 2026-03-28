@@ -46,3 +46,12 @@ What: `MODE #test` does not show the number of users the channel is limited to.
 ### Point 10.2
 Who: Sara
 What: I'm not sure how to send PING from server to user
+
+---
+
+## Resolved (implementation / docs)
+
+- **PRIVMSG / Halloy:** `Privmsg.cpp` now uses `params[1]` as the message when `trailing` is empty (e.g. `PRIVMSG #chan hello`).
+- **4.2 / `*`:** Documented in `MANUAL_TESTING_GUIDE.md` — `*` is the nickname placeholder before registration (RFC 2812); server replies are correct.
+- **8.15 MODE query:** `Mode.cpp` RPL_CHANNELMODEIS (324) now appends `+k` key and `+l` limit when those modes are set.
+- **10.2:** Server does not send periodic PING; guide updated to test `PONG` acceptance instead. Optional future: server-initiated PING keepalive.
