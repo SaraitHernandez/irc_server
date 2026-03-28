@@ -100,11 +100,24 @@ static void	signalHandler(int sig) {
 //       poller.processEvents();
 //   }
 void	Server::run() {
-	//SIGINT handler
-	signal(SIGINT, signalHandler); // Ctrl+C
-	signal(SIGTERM, signalHandler);// kill <pid>
-	signal(SIGQUIT, signalHandler);// Ctrl+\ — prevent core dump
-	signal(SIGPIPE, SIG_IGN);      // prevent crash on broken client send()
+	struct sigaction sa;
+	struct sigaction sa_pipe;
+	
+	// Setup for SIGINT, SIGTERM, SIGQUIT (graceful shutdown)
+	sa.sa_handler = signalHandler;
+	sigemptyset(&sa.sa_mask);                // no signals blocked during handler
+	sa.sa_flags = SA_RESTART;                // auto-restart poll() after signal
+	
+	sigaction(SIGINT,  &sa, NULL);  // Ctrl+C
+	sigaction(SIGTERM, &sa, NULL);  // kill <pid>
+	sigaction(SIGQUIT, &sa, NULL);  // Ctrl+\ — prevent core dump
+	
+	// Setup for SIGPIPE (ignore broken pipe)
+	sa_pipe.sa_handler = SIG_IGN;
+	sigemptyset(&sa_pipe.sa_mask);
+	sa_pipe.sa_flags = 0;
+	sigaction(SIGPIPE, &sa_pipe, NULL);     // prevent crash on broken client send()
+	
 	std::cout << "[Server] Running event loop..." << std::endl;
 
 	while (running_) {
