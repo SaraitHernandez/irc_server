@@ -18,12 +18,13 @@
 BotCore::BotCore(const std::string& host, int port, const std::string& pass,
                   const std::string& nick, const std::string& channel)
     : host_(host), port_(port), pass_(pass), nick_(nick),
-      channel_(channel), fd_(-1)
+      channel_(channel), fd_(-1), running_(true)
 {
 }
 
 BotCore::~BotCore()
 {
+    std::string().swap(recv_buffer_);  // Force buffer deallocation
     close();
 }
 
@@ -208,4 +209,14 @@ void BotCore::close()
         fd_ = -1;
         std::cout << "[BOT] Connection closed" << std::endl;
     }
+}
+
+void BotCore::stop()
+{
+    running_ = false;
+}
+
+bool BotCore::isRunning() const
+{
+    return running_;
 }

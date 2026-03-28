@@ -18,6 +18,8 @@ public:
     bool isConnected() const;
     void sendRaw(const std::string& msg);
     void close();
+    void stop();
+    bool isRunning() const;
 
 private:
     std::string host_;
@@ -27,6 +29,7 @@ private:
     std::string channel_;
     int fd_;
     std::string recv_buffer_;
+    bool running_;
 
     bool connectToServer();
     std::vector<std::string> extractLines();
