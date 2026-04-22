@@ -1,11 +1,15 @@
 # EAGAIN & Send Queue: The Technical Truth
 
 **Version:** 1.0  
-**Date:** April 22, 2026  
+**Date:** April 22, 2026 
 **Context:** Technical discussion aftermath — resolving eval sheet misinterpretation  
 **Scope:** errno handling in `send()`, TCP buffer exhaustion, FLOODBOT validation  
 **Related:** `src/Server.cpp` — `sendToClient()`, `flushClientSendQueue()`
 
+---
+
+> Video and LinkedIn discussion links at the end of this file.  
+> **LinkedIn Manual:** [EAGAIN issue — FLOODBOT](https://www.linkedin.com/feed/update/urn:li:activity:7452598819722174464/)
 ---
 
 ## 1. The Problem — Silent Data Loss in `sendToClient()`
@@ -271,6 +275,7 @@ Here, we show how send queue + EAGAIN handling proves the fix works:
   - `man 7 errno` — Error classification system
 
 - **LinkedIn Discussion** — [EAGAIN issue](https://www.linkedin.com/posts/oleost_ecole42-42warsaw-cpp-ugcPost-7447466033948377088-2FPV) — Peer debate on eval sheet interpretation; discussion proved errno for error classification is not only allowed but *required*.
+- **LinkedIn Manual video** — [EAGAIN issue FLOODBOT](https://www.linkedin.com/feed/update/urn:li:activity:7452598819722174464/)
 
 ---
 
@@ -284,3 +289,4 @@ The FLOODBOT test proves this distinction matters: suspend a client, flood the c
 
 **Document Version:** 1.0  
 **Last Updated:** April 22, 2026  
+
